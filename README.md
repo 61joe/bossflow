@@ -145,3 +145,10 @@ pnpm build
 ```text
 pnpm changeset
 ```
+
+发布 PR 自动化需要仓库 secret `RELEASE_PR_TOKEN`。使用仅授权当前仓库的 GitHub fine-grained PAT，并授予：
+
+- Contents: Read and write
+- Pull requests: Read and write
+
+使用专用 token 是为了让自动创建的 `pull_request` 工作流能够触发 `Branch name policy` 和 CI；仓库内置 `GITHUB_TOKEN` 创建的 PR 事件不会再次触发普通 PR 工作流。
