@@ -1,0 +1,30 @@
+name: PR Policy
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  branch-name:
+    name: Branch name policy
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+
+    steps:
+      - name: Require feat, fix, or chore branch prefix
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          case "$HEAD_REF" in
+            feat/*|fix/*|chore/*)
+              echo "Branch name accepted: $HEAD_REF"
+              ;;
+            *)
+              echo "::error::Branch '$HEAD_REF' must start with feat/, fix/, or chore/."
+              exit 1
+              ;;
+          esac
