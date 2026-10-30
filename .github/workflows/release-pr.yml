@@ -1,0 +1,85 @@
+name: Release PR
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: release-pr
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Prepare release pull request
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check for pending changesets
+        id: changesets
+        run: |
+          if find .changeset -maxdepth 1 -type f -name '*.md' ! -name 'README.md' | grep -q .; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Prepare release branch
+        if: steps.changesets.outputs.found == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -C chore/release origin/main
+          pnpm changeset version
+          pnpm install --lockfile-only
+
+          if git diff --quiet; then
+            echo "No release changes were generated."
+            exit 0
+          fi
+
+          git add --all
+          git commit -m "chore: version packages"
+          git push --force-with-lease origin chore/release
+
+          existing_pr="$(gh pr list --base main --head chore/release --state open --json number --jq '.[0].number')"
+          if [ -z "$existing_pr" ]; then
+            gh pr create \
+              --base main \
+              --head chore/release \
+              --title "chore: version packages" \
+              --body "Automated release PR generated from pending Changesets. Merging this PR creates the corresponding GitHub Release; npm publishing is not enabled." \
+              >/dev/null
+          else
+            gh pr edit "$existing_pr" \
+              --title "chore: version packages" \
+              --body "Automated release PR generated from pending Changesets. Merging this PR creates the corresponding GitHub Release; npm publishing is not enabled."
+          fi
+
+          # GITHUB_TOKEN-created events do not start regular pull_request workflows.
+          gh workflow run pr-policy.yml --ref chore/release -f head_ref=chore/release

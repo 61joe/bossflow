@@ -9,6 +9,7 @@
   },
   "scripts": {
     "build": "pnpm -r --if-present build",
+    "changeset": "changeset",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
     "dev": "pnpm build && pnpm --filter @bossflow/cli exec tsx src/bin.ts",
     "format": "prettier --write .",
@@ -19,12 +20,15 @@
     "lint:staged": "lint-staged",
     "spec:list": "OPENSPEC_TELEMETRY=0 openspec list",
     "spec:validate": "OPENSPEC_TELEMETRY=0 openspec validate --all --strict --no-interactive",
+    "version-packages": "changeset version && pnpm install --lockfile-only",
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand",
     "test:coverage": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand --coverage",
     "typecheck": "pnpm -r --if-present typecheck",
     "prepare": "husky"
   },
   "devDependencies": {
+    "@changesets/changelog-github": "^1.0.1",
+    "@changesets/cli": "^3.0.3",
     "@eslint/js": "^10.0.1",
     "@fission-ai/openspec": "1.5.0",
     "@types/jest": "^30.0.0",
