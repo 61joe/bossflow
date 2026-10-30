@@ -4,6 +4,12 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      head_ref:
+        description: Branch name to validate for manually dispatched release checks
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -17,7 +23,7 @@ jobs:
     steps:
       - name: Require feat, fix, or chore branch prefix
         env:
-          HEAD_REF: ${{ github.head_ref }}
+          HEAD_REF: ${{ inputs.head_ref || github.head_ref || github.ref_name }}
         run: |
           case "$HEAD_REF" in
             feat/*|fix/*|chore/*)

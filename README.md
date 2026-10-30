@@ -129,4 +129,19 @@ pnpm test
 pnpm build
 ```
 
-所有检查运行在一个 Linux Job 中，以减少私有仓库的 Actions compute 消耗。
+所有检查运行在一个 Linux Job 中，以减少 Actions 用量和总耗时。
+
+## Release PR
+
+发布使用独立的 Changesets 发布 PR，不在普通功能 PR 合并时直接发布：
+
+1. 功能 PR 必须包含 `.changeset/*.md` 版本说明。
+2. 合并到 `main` 后，`Release PR` 工作流创建或更新 `chore/release` 分支和 PR。
+3. 发布 PR 合并后，`GitHub Release` 工作流运行完整检查、创建 `vX.Y.Z` Tag 和 GitHub Release。
+4. 当前不执行 `npm publish`；npm Registry 发布将在包名、许可证和认证确定后单独启用。
+
+本地添加 changeset：
+
+```text
+pnpm changeset
+```
