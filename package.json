@@ -1,0 +1,42 @@
+{
+  "name": "bossflow",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.16.1",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "pnpm -r --if-present build",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "dev": "pnpm build && pnpm --filter @bossflow/cli exec tsx src/bin.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "lint:staged": "lint-staged",
+    "spec:list": "openspec list",
+    "spec:validate": "openspec validate --all --strict --no-interactive",
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand",
+    "test:coverage": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand --coverage",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@fission-ai/openspec": "1.5.0",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^26.6.6",
+    "eslint": "^10.13.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.13.0",
+    "husky": "^9.1.7",
+    "jest": "^30.5.2",
+    "lint-staged": "^17.6.0",
+    "prettier": "^3.9.10",
+    "ts-jest": "^29.4.15",
+    "tsx": "^4.23.15",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.72.1"
+  }
+}

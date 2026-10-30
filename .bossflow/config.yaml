@@ -1,0 +1,15 @@
+schemaVersion: 1
+workflow:
+  initialStage: spec
+  runDirectory: .bossflow/runs
+models:
+  defaultProfile: openai
+  profiles:
+    openai:
+      kind: openai
+      apiKeyEnv: OPENAI_API_KEY
+    deepseek:
+      kind: openai-compatible
+      model: deepseek-flash
+      baseUrl: https://api.deepseek.com
+      apiKeyEnv: DEEPSEEK_API_KEY

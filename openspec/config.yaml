@@ -1,0 +1,41 @@
+schema: spec-driven
+
+context: |
+  BossFlow is a Codex-native development orchestration product with a TypeScript
+  workflow core, a run store, a CLI, and adapters for Coding Agents.
+
+  Canonical project documents:
+  - docs/PRD.md: product scope, goals, and non-goals
+  - docs/TECH_STACK.md: selected technology and dependency boundaries
+  - docs/TS_STYLE_GUIDE.md: TypeScript and module conventions
+  - docs/MODEL_CONFIGURATION.md: model profiles and credential security
+
+  Technical baseline:
+  - Node.js 24, pnpm workspace, TypeScript 6 ESM with NodeNext
+  - OpenAI Agents SDK JS and Zod
+  - Commander CLI, Jest, ESLint, and Prettier
+  - Core must remain independent from specific Coding Agent adapters
+
+  Verification:
+  - Run `pnpm check` for formatting, lint, types, tests, and builds
+  - Run `pnpm exec openspec validate --all` for OpenSpec artifacts
+
+  Security:
+  - Never write API keys into openspec artifacts, project configuration, logs,
+    CLI arguments, or run outputs
+  - Use environment variables or .bossflow/credentials.local.yaml
+  - Do not push, merge, or create PRs without explicit user approval
+
+rules:
+  proposal:
+    - Focus on observable user or system behavior.
+    - State non-goals when a change could be mistaken for full workflow delivery.
+  design:
+    - Reference existing canonical documents instead of duplicating them.
+    - Record provider compatibility and security trade-offs explicitly.
+  specs:
+    - Define one capability per directory.
+    - Every requirement must include at least one testable scenario.
+  tasks:
+    - Use dependency-ordered checkbox tasks.
+    - Include verification against pnpm check and OpenSpec validation.

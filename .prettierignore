@@ -1,0 +1,7 @@
+**/.bossflow/**
+**/coverage/**
+**/dist/**
+**/node_modules/**
+**/.agents/**
+**/.codex/**
+pnpm-lock.yaml

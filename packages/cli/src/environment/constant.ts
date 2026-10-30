@@ -1,0 +1,1 @@
+export const OPENAI_API_KEY_ENV = 'OPENAI_API_KEY';

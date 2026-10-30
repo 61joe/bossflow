@@ -1,0 +1,28 @@
+{
+  "name": "@bossflow/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@openai/agents": "^0.21.0",
+    "execa": "^10.2.1",
+    "fast-glob": "^3.3.3",
+    "simple-git": "^4.0.2",
+    "zod": "^4.6.7"
+  }
+}
