@@ -13,6 +13,8 @@
     "dev": "pnpm build && pnpm --filter @bossflow/cli exec tsx src/bin.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "guard:branch": "node scripts/guard-branch.mjs",
+    "guard:push": "node scripts/guard-push.mjs",
     "lint": "eslint .",
     "lint:staged": "lint-staged",
     "spec:list": "OPENSPEC_TELEMETRY=0 openspec list",
