@@ -108,13 +108,15 @@ pnpm spec:validate
 
 `pre-push` 会拒绝直接推送 `main` 或 `master`。所有代码修改必须使用功能分支并通过 Pull Request 合并。
 
-功能分支建议使用：
+功能分支必须以 `feat/`、`fix/` 或 `chore/` 开头：
 
 ```text
-git switch -c codex/<short-change-name>
+git switch -c feat/<short-change-name>
+git switch -c fix/<short-change-name>
+git switch -c chore/<short-change-name>
 ```
 
-私有仓库的服务器端 Ruleset / Branch Protection 需要 GitHub Pro；当前本地 Husky guard 是无额外订阅时的强制约束，GitHub Actions 仍作为 PR 验证门禁。
+`main` 分支启用服务器端保护：禁止直接推送、强制推送和删除，并要求通过 Pull Request。PR 必须通过 `Branch name policy` 检查才能合并。现有 lint、typecheck、单测和 build 工作流继续运行，但不作为合并阻断条件。
 
 ## CI
 

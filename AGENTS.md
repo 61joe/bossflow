@@ -40,7 +40,8 @@ pnpm spec:validate
 - API Key 不得写入 `.bossflow/config.yaml`、CLI 参数、日志或运行产物。
 - 本地凭据只能通过 `bossflow auth` 管理，并保持 `0600` 和 Git 忽略。
 - 不得绕过 Husky 或使用 `--no-verify`，除非用户明确要求。
-- 不得直接提交或推送 `main`、`master`；从功能分支创建 PR，等待 CI 通过后再合并。
+- 不得直接提交或推送 `main`、`master`；从 `feat/`、`fix/` 或 `chore/` 分支创建 PR。
+- 合并 PR 前必须通过 `Branch name policy`；质量 CI 可以运行，但不作为合并门禁。
 - 未经明确授权不执行提交、推送、合并或创建 PR。
 
 ## 完成标准
