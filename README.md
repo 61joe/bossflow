@@ -104,3 +104,16 @@ pnpm spec:validate
 ```
 
 暂存的 TypeScript、JavaScript、JSON、Markdown 和 YAML 文件会由 lint-staged 自动修复和格式化；完整测试与构建仍由 `pnpm check` 或 CI 执行。
+
+## CI
+
+GitHub Actions 工作流位于 `.github/workflows/ci.yml`，在 `main` 分支推送、Pull Request 和手动触发时执行：
+
+```text
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
+```
+
+所有检查运行在一个 Linux Job 中，以减少私有仓库的 Actions compute 消耗。
