@@ -98,12 +98,23 @@ pnpm spec:validate
 项目使用 Husky 管理 `.husky/` hooks。`pre-commit` 会执行：
 
 ```text
+pnpm guard:branch
 pnpm lint:staged
 pnpm typecheck
 pnpm spec:validate
 ```
 
 暂存的 TypeScript、JavaScript、JSON、Markdown 和 YAML 文件会由 lint-staged 自动修复和格式化；完整测试与构建仍由 `pnpm check` 或 CI 执行。
+
+`pre-push` 会拒绝直接推送 `main` 或 `master`。所有代码修改必须使用功能分支并通过 Pull Request 合并。
+
+功能分支建议使用：
+
+```text
+git switch -c codex/<short-change-name>
+```
+
+私有仓库的服务器端 Ruleset / Branch Protection 需要 GitHub Pro；当前本地 Husky guard 是无额外订阅时的强制约束，GitHub Actions 仍作为 PR 验证门禁。
 
 ## CI
 
