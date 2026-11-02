@@ -26,11 +26,11 @@ jobs:
           HEAD_REF: ${{ inputs.head_ref || github.head_ref || github.ref_name }}
         run: |
           case "$HEAD_REF" in
-            feat/*|fix/*|chore/*)
+            feat-*|fix-*|chore-*|feat/*|fix/*|chore/*)
               echo "Branch name accepted: $HEAD_REF"
               ;;
             *)
-              echo "::error::Branch '$HEAD_REF' must start with feat/, fix/, or chore/."
+              echo "::error::Branch '$HEAD_REF' must start with feat-, fix-, or chore-."
               exit 1
               ;;
           esac
