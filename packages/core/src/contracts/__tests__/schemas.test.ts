@@ -1,6 +1,8 @@
 import {
   ApprovalRecordSchema,
+  ImplementationResultSchema,
   RequirementCoverageSchema,
+  ReviewResultSchema,
   TechnicalPlanSchema,
   WorkflowRunSchema,
 } from '../../index.js';
@@ -105,5 +107,109 @@ describe('workflow contracts', () => {
       approvals: [],
       artifacts: [],
     });
+  });
+});
+
+describe('specialist agent contracts', () => {
+  it('validates implementation results', () => {
+    expect(
+      ImplementationResultSchema.parse({
+        schemaVersion: 1,
+        status: 'completed',
+        summary: 'Implemented the scoped change.',
+        changedPaths: ['packages/core/src/agents'],
+        testChanges: ['Added focused tests.'],
+        notes: [],
+      }),
+    ).toMatchObject({ status: 'completed' });
+  });
+
+  it('validates unresolved review findings and rejects unknown references', () => {
+    const review = {
+      schemaVersion: 1,
+      summary: 'Review found an issue.',
+      findings: [
+        {
+          id: 'finding-1',
+          severity: 'P1',
+          title: 'Missing guard',
+          description: 'A path guard is missing.',
+          status: 'open',
+        },
+      ],
+      requirementCoverage: [
+        {
+          requirementId: 'workflow-runs:specialists',
+          criterion: 'Findings include severity.',
+          status: 'partial',
+          evidence: ['review test'],
+        },
+      ],
+      unresolvedFindingIds: ['finding-1'],
+    };
+
+    expect(ReviewResultSchema.parse(review)).toMatchObject({
+      unresolvedFindingIds: ['finding-1'],
+    });
+    expect(() =>
+      ReviewResultSchema.parse({
+        ...review,
+        unresolvedFindingIds: ['missing-finding'],
+      }),
+    ).toThrow('must reference an open finding');
+  });
+
+  it('rejects unresolved references to non-open findings', () => {
+    const review = {
+      schemaVersion: 1,
+      summary: 'Review found an issue.',
+      findings: [
+        {
+          id: 'finding-1',
+          severity: 'P1',
+          title: 'Missing guard',
+          description: 'A path guard is missing.',
+          status: 'resolved',
+        },
+      ],
+      requirementCoverage: [
+        {
+          requirementId: 'workflow-runs:specialists',
+          criterion: 'Findings include severity.',
+          status: 'covered',
+          evidence: ['review test'],
+        },
+      ],
+      unresolvedFindingIds: ['finding-1'],
+    };
+
+    expect(() => ReviewResultSchema.parse(review)).toThrow('must reference an open finding');
+  });
+
+  it('requires every open finding to be listed as unresolved', () => {
+    const review = {
+      schemaVersion: 1,
+      summary: 'Review found an issue.',
+      findings: [
+        {
+          id: 'finding-1',
+          severity: 'P1',
+          title: 'Missing guard',
+          description: 'A path guard is missing.',
+          status: 'open',
+        },
+      ],
+      requirementCoverage: [
+        {
+          requirementId: 'workflow-runs:specialists',
+          criterion: 'Findings include severity.',
+          status: 'partial',
+          evidence: ['review test'],
+        },
+      ],
+      unresolvedFindingIds: [],
+    };
+
+    expect(() => ReviewResultSchema.parse(review)).toThrow('must be listed as unresolved');
   });
 });

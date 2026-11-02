@@ -8,12 +8,12 @@
 
 ## 2. Specialist Agents
 
-- [ ] 2.1 Implement the Tech Lead Agent with a structured technical-plan Schema covering affected paths, ordered tasks, interface changes, risks, and verification commands.
-- [ ] 2.2 Implement the Implementer Agent with approved scope, write-path restrictions, test expectations, and structured implementation results.
-- [ ] 2.3 Implement the Reviewer Agent with diff, verification evidence, requirement coverage, severity, and unresolved-finding output.
-- [ ] 2.4 Add an orchestrator that calls Product, Tech Lead, Implementer, and Reviewer through `agent.asTool()` while retaining stage control.
-- [ ] 2.5 Reuse provider compatibility parsing and add bounded validation-feedback retries for malformed plan or review JSON.
-- [ ] 2.6 Define an explicit single-Agent fallback when specialist Agent capability detection fails.
+- [x] 2.1 Implement the Tech Lead Agent with a structured technical-plan Schema covering affected paths, ordered tasks, interface changes, risks, and verification commands.
+- [x] 2.2 Implement the Implementer Agent with approved scope, write-path restrictions, test expectations, and structured implementation results.
+- [x] 2.3 Implement the Reviewer Agent with diff, verification evidence, requirement coverage, severity, and unresolved-finding output.
+- [x] 2.4 Add an orchestrator that calls Product, Tech Lead, Implementer, and Reviewer through `agent.asTool()` while retaining stage control.
+- [x] 2.5 Reuse provider compatibility parsing and add bounded validation-feedback retries for malformed plan or review JSON.
+- [x] 2.6 Define an explicit single-Agent fallback when specialist Agent capability detection fails.
 
 ## 3. Project Context And Commands
 

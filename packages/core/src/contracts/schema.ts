@@ -5,6 +5,7 @@ import {
   APPROVAL_GATES,
   ARTIFACT_KINDS,
   COVERAGE_STATUSES,
+  IMPLEMENTATION_RESULT_STATUSES,
   REVIEW_SEVERITIES,
   REVIEW_STATUSES,
   RISK_SEVERITIES,
@@ -153,6 +154,50 @@ export const RequirementCoverageSchema = z
     evidence: z.array(NonEmptyStringSchema),
   })
   .strict();
+
+export const ImplementationResultSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    status: z.enum(IMPLEMENTATION_RESULT_STATUSES),
+    summary: NonEmptyStringSchema,
+    changedPaths: z.array(NonEmptyStringSchema),
+    testChanges: z.array(NonEmptyStringSchema),
+    notes: z.array(NonEmptyStringSchema),
+  })
+  .strict();
+
+export const ReviewResultSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    summary: NonEmptyStringSchema,
+    findings: z.array(ReviewFindingSchema),
+    requirementCoverage: z.array(RequirementCoverageSchema).min(1),
+    unresolvedFindingIds: z.array(NonEmptyStringSchema),
+  })
+  .strict()
+  .superRefine((review, context) => {
+    const findingsById = new Map(review.findings.map((finding) => [finding.id, finding]));
+    const unresolvedFindingIds = new Set(review.unresolvedFindingIds);
+    for (const findingId of review.unresolvedFindingIds) {
+      const finding = findingsById.get(findingId);
+      if (finding === undefined || finding.status !== 'open') {
+        context.addIssue({
+          code: 'custom',
+          path: ['unresolvedFindingIds'],
+          message: `Unresolved finding "${findingId}" must reference an open finding.`,
+        });
+      }
+    }
+    for (const finding of review.findings) {
+      if (finding.status === 'open' && !unresolvedFindingIds.has(finding.id)) {
+        context.addIssue({
+          code: 'custom',
+          path: ['unresolvedFindingIds'],
+          message: `Open finding "${finding.id}" must be listed as unresolved.`,
+        });
+      }
+    }
+  });
 
 export const RunSummarySchema = z
   .object({
