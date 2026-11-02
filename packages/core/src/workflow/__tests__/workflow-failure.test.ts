@@ -40,4 +40,20 @@ describe('workflow failure state', () => {
       to: 'failed',
     });
   });
+
+  it('records failure metadata when entering the failed stage', () => {
+    const failure = {
+      stage: 'build',
+      code: 'BUILD_FAILED',
+      message: 'Build failed',
+      occurredAt: '2026-11-02T00:00:00.000Z',
+      retryable: true,
+    };
+    const result = transitionWorkflow(baseRun, 'failed', '2026-11-02T00:01:00.000Z', { failure });
+
+    expect(result).toMatchObject({
+      ok: true,
+      run: { stage: 'failed', failure },
+    });
+  });
 });

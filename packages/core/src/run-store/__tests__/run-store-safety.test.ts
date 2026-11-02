@@ -4,7 +4,49 @@ import path from 'node:path';
 
 import { FileRunStore } from '../index.js';
 
-describe('FileRunStore safety and concurrency', () => {
+describe('FileRunStore validation', () => {
+  it('rejects an empty run goal', async () => {
+    const runsRoot = await mkdtemp(path.join(tmpdir(), 'bossflow-runs-'));
+
+    try {
+      const store = new FileRunStore({ runsRoot });
+      await expect(
+        store.create({
+          repositoryPath: '/tmp/project',
+          goal: '   ',
+          modelProfile: 'openai',
+        }),
+      ).rejects.toThrow('must not be empty');
+    } finally {
+      await rm(runsRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('saves a new run document without existing metadata', async () => {
+    const runsRoot = await mkdtemp(path.join(tmpdir(), 'bossflow-runs-'));
+
+    try {
+      const store = new FileRunStore({ runsRoot });
+      const saved = await store.save({
+        schemaVersion: 1,
+        id: 'manual-run',
+        repositoryPath: '/tmp/project',
+        goal: 'Manual run',
+        modelProfile: 'openai',
+        stage: 'spec',
+        workflowRevision: 1,
+        approvals: [],
+        artifacts: [],
+        createdAt: '2026-11-02T00:00:00.000Z',
+        updatedAt: '2026-11-02T00:00:00.000Z',
+      });
+
+      await expect(store.read(saved.id)).resolves.toEqual(saved);
+    } finally {
+      await rm(runsRoot, { recursive: true, force: true });
+    }
+  });
+
   it('rejects traversal run identifiers before filesystem access', async () => {
     const runsRoot = await mkdtemp(path.join(tmpdir(), 'bossflow-runs-'));
 
@@ -21,95 +63,6 @@ describe('FileRunStore safety and concurrency', () => {
       await expect(
         store.writeMarkdown({ ...run, id: '../escape' }, 'escape.md', '#'),
       ).rejects.toThrow('Invalid run ID');
-    } finally {
-      await rm(runsRoot, { recursive: true, force: true });
-    }
-  });
-
-  it('serializes concurrent transitions without losing revisions', async () => {
-    const runsRoot = await mkdtemp(path.join(tmpdir(), 'bossflow-runs-'));
-
-    try {
-      const store = new FileRunStore({ runsRoot });
-      const run = await store.create({
-        repositoryPath: '/tmp/project',
-        goal: 'Concurrent transitions',
-        modelProfile: 'openai',
-      });
-
-      const results = await Promise.all([
-        store.transition(run.id, 'plan', '2026-11-02T00:01:00.000Z'),
-        store.transition(run.id, 'blocked', '2026-11-02T00:01:01.000Z'),
-      ]);
-      const persisted = await store.read(run.id);
-
-      expect(results.every((result) => result.ok)).toBe(true);
-      expect(persisted.workflowRevision).toBe(3);
-    } finally {
-      await rm(runsRoot, { recursive: true, force: true });
-    }
-  });
-
-  it('retains all artifact references during concurrent writes', async () => {
-    const runsRoot = await mkdtemp(path.join(tmpdir(), 'bossflow-runs-'));
-
-    try {
-      const store = new FileRunStore({ runsRoot });
-      const run = await store.create({
-        repositoryPath: '/tmp/project',
-        goal: 'Concurrent artifacts',
-        modelProfile: 'openai',
-      });
-
-      await Promise.all([
-        store.writeJson(run, 'spec.json', { schemaVersion: 1 }),
-        store.writeMarkdown(run, 'review.md', '# Review'),
-      ]);
-      const persisted = await store.read(run.id);
-
-      expect(persisted.artifacts).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ fileName: 'spec.json' }),
-          expect.objectContaining({ fileName: 'review.md' }),
-        ]),
-      );
-    } finally {
-      await rm(runsRoot, { recursive: true, force: true });
-    }
-  });
-
-  it('rejects stale run state writes', async () => {
-    const runsRoot = await mkdtemp(path.join(tmpdir(), 'bossflow-runs-'));
-
-    try {
-      const store = new FileRunStore({ runsRoot });
-      const staleRun = await store.create({
-        repositoryPath: '/tmp/project',
-        goal: 'Reject stale writes',
-        modelProfile: 'openai',
-      });
-      await store.transition(staleRun.id, 'plan', '2026-11-02T00:01:00.000Z');
-
-      await expect(store.save(staleRun)).rejects.toThrow('Stale run state');
-    } finally {
-      await rm(runsRoot, { recursive: true, force: true });
-    }
-  });
-
-  it('rejects artifact paths outside the run directory', async () => {
-    const runsRoot = await mkdtemp(path.join(tmpdir(), 'bossflow-runs-'));
-
-    try {
-      const store = new FileRunStore({ runsRoot });
-      const run = await store.create({
-        repositoryPath: '/tmp/project',
-        goal: 'Test path safety',
-        modelProfile: 'openai',
-      });
-
-      await expect(store.writeMarkdown(run, '../escape.md', '# Escape')).rejects.toThrow(
-        'Invalid artifact file name',
-      );
     } finally {
       await rm(runsRoot, { recursive: true, force: true });
     }

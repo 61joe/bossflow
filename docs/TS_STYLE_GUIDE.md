@@ -404,6 +404,7 @@ Prettier 是格式问题的唯一决策者：
 - 不对 Agent 的自然语言输出使用快照测试；对有稳定 Schema 的结构化输出使用精确断言。
 - 不通过修改模块全局状态实现 Mock；优先替换明确的接口依赖。
 - 覆盖率重点放在 Workflow、Schema、权限和恢复逻辑，不用整体覆盖率数字掩盖关键路径缺口。
+- `pnpm test` 默认启用 coverage；全局 statements、branches、functions 和 lines 覆盖率必须达到 100%。
 - Jest 使用 ESM 配置，不为了测试把生产代码降级为 CommonJS。
 
 ## 14. CI 与提交前检查

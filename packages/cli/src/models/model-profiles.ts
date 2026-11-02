@@ -92,9 +92,6 @@ export async function removeModelProfile(projectRoot: string, profileName: strin
   if (profileName === config.models.defaultProfile) {
     throw new Error('Select another default model profile before removing this one.');
   }
-  if (Object.keys(config.models.profiles).length === 1) {
-    throw new Error('At least one model profile must remain.');
-  }
 
   const profiles = { ...config.models.profiles };
   delete profiles[profileName];

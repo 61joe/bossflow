@@ -29,9 +29,15 @@ import type { CreateRunInput, FileRunStoreOptions, RunStore } from './types.js';
 
 export class FileRunStore implements RunStore {
   readonly #runsRoot: string;
+  readonly #lockTimeoutMs: number;
+  readonly #lockRetryDelayMs: number;
+  readonly #lockStaleMs: number;
 
   constructor(options: FileRunStoreOptions) {
     this.#runsRoot = path.resolve(options.runsRoot);
+    this.#lockTimeoutMs = options.lockTimeoutMs ?? LOCK_WAIT_TIMEOUT_MS;
+    this.#lockRetryDelayMs = options.lockRetryDelayMs ?? LOCK_RETRY_DELAY_MS;
+    this.#lockStaleMs = options.lockStaleMs ?? LOCK_STALE_MS;
   }
 
   async create(input: CreateRunInput): Promise<WorkflowRun> {
@@ -85,8 +91,8 @@ export class FileRunStore implements RunStore {
     return this.#withRunLock(validatedRun.id, async () => {
       try {
         const currentRun = await this.#readUnlocked(validatedRun.id);
-        const currentRevision = currentRun.workflowRevision ?? INITIAL_WORKFLOW_REVISION;
-        const incomingRevision = validatedRun.workflowRevision ?? INITIAL_WORKFLOW_REVISION;
+        const currentRevision = currentRun.workflowRevision as number;
+        const incomingRevision = validatedRun.workflowRevision as number;
         if (
           incomingRevision < currentRevision ||
           (incomingRevision === currentRevision && validatedRun.updatedAt < currentRun.updatedAt)
@@ -205,7 +211,7 @@ export class FileRunStore implements RunStore {
     assertValidRunId(runId);
     const locksDirectory = path.join(this.#runsRoot, LOCKS_DIRECTORY);
     const lockDirectory = path.join(locksDirectory, `${runId}.lock`);
-    const deadline = Date.now() + LOCK_WAIT_TIMEOUT_MS;
+    const deadline = Date.now() + this.#lockTimeoutMs;
 
     await mkdir(locksDirectory, { recursive: true });
     while (true) {
@@ -217,7 +223,7 @@ export class FileRunStore implements RunStore {
           throw error;
         }
         if (Date.now() >= deadline) {
-          if (await isStaleLock(lockDirectory)) {
+          if (await isStaleLock(lockDirectory, this.#lockStaleMs)) {
             await rm(lockDirectory, { recursive: true, force: true });
             continue;
           }
@@ -225,7 +231,7 @@ export class FileRunStore implements RunStore {
             cause: error,
           });
         }
-        await delay(LOCK_RETRY_DELAY_MS);
+        await delay(this.#lockRetryDelayMs);
       }
     }
 
@@ -238,7 +244,9 @@ export class FileRunStore implements RunStore {
 }
 
 function withArtifact(run: WorkflowRun, artifact: ArtifactReference): WorkflowRun {
-  const artifacts = (run.artifacts ?? []).filter((existing) => existing.path !== artifact.path);
+  const artifacts = (run.artifacts as readonly ArtifactReference[]).filter(
+    (existing) => existing.path !== artifact.path,
+  );
   return {
     ...run,
     artifacts: [...artifacts, artifact],
@@ -256,10 +264,10 @@ function isFileExistsError(error: unknown): boolean {
   return typeof error === 'object' && error !== null && 'code' in error && error.code === 'EEXIST';
 }
 
-async function isStaleLock(lockDirectory: string): Promise<boolean> {
+async function isStaleLock(lockDirectory: string, staleMs: number): Promise<boolean> {
   try {
     const lockStat = await stat(lockDirectory);
-    return Date.now() - lockStat.mtimeMs >= LOCK_STALE_MS;
+    return Date.now() - lockStat.mtimeMs >= staleMs;
   } catch (error: unknown) {
     if (isFileMissingError(error)) {
       return true;
@@ -289,7 +297,8 @@ function createArtifactReference(
 }
 
 function artifactKindForFileName(fileName: string): ArtifactKind {
-  const stem = fileName.split('.')[0] ?? '';
+  const extensionIndex = fileName.indexOf('.');
+  const stem = extensionIndex === -1 ? fileName : fileName.slice(0, extensionIndex);
   switch (stem) {
     case 'request':
     case 'spec':

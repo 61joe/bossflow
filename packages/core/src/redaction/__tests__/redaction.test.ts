@@ -12,6 +12,16 @@ describe('secret redaction', () => {
     expect(result).toContain('[REDACTED]');
   });
 
+  it('supports custom replacement text and ignores empty secrets', () => {
+    expect(
+      redactText('secret-value remains', {
+        secrets: ['', 'secret-value'],
+        replacement: '<hidden>',
+      }),
+    ).toBe('<hidden> remains');
+    expect(redactText('Bearer abcdefghijk')).toBe('Bearer [REDACTED]');
+  });
+
   it('redacts nested artifact content without changing non-sensitive values', () => {
     const result = redactUnknown(
       {
@@ -44,6 +54,35 @@ describe('secret redaction', () => {
     });
   });
 
+  it('redacts non-error throw values and depth-limited cause chains', () => {
+    expect(redactError('Bearer abcdefghijk')).toEqual({
+      name: 'Error',
+      message: 'Bearer [REDACTED]',
+    });
+
+    const root = new Error('root');
+    let current = root;
+    for (let index = 0; index < 14; index += 1) {
+      const next = new Error(`cause-${index}`);
+      Object.assign(current, { cause: next });
+      current = next;
+    }
+
+    let redacted = redactError(root);
+    for (let index = 0; index < 14 && redacted.cause !== undefined; index += 1) {
+      redacted = redacted.cause;
+    }
+    expect(redacted.message).toBe('[MAX_CAUSE_DEPTH]');
+    expect(redactError({ message: 'password=hunter2' })).toEqual({
+      name: 'Error',
+      message: 'password=[REDACTED]',
+    });
+    expect(redactError({ message: 123 })).toEqual({
+      name: 'Error',
+      message: '[object Object]',
+    });
+  });
+
   it('stops cyclic error cause recursion', () => {
     const error = new Error('root');
     Object.assign(error, { cause: error });
@@ -56,5 +95,16 @@ describe('secret redaction', () => {
         message: '[CIRCULAR_CAUSE]',
       },
     });
+  });
+
+  it('preserves primitives and depth-limits nested artifacts', () => {
+    expect(redactUnknown(42)).toBe(42);
+
+    let nested: unknown = 'leaf';
+    for (let index = 0; index < 14; index += 1) {
+      nested = { child: nested };
+    }
+
+    expect(JSON.stringify(redactUnknown(nested))).toContain('[MAX_DEPTH]');
   });
 });

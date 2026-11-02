@@ -14,6 +14,9 @@ export interface CreateRunInput {
 
 export interface FileRunStoreOptions {
   readonly runsRoot: string;
+  readonly lockTimeoutMs?: number;
+  readonly lockRetryDelayMs?: number;
+  readonly lockStaleMs?: number;
 }
 
 export interface RunStore {

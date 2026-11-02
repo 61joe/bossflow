@@ -62,6 +62,32 @@ describe('workflow contracts', () => {
     ).toMatchObject({ status: 'covered' });
   });
 
+  it('allows external-action approvals without artifact metadata', () => {
+    expect(
+      ApprovalRecordSchema.parse({
+        id: 'external-approval',
+        gate: 'external-action',
+        decision: 'approved',
+        actor: 'user',
+        decidedAt: '2026-11-02T00:00:00.000Z',
+        workflowRevision: 4,
+      }),
+    ).toMatchObject({ gate: 'external-action' });
+  });
+
+  it('rejects plan approvals without artifact metadata', () => {
+    expect(() =>
+      ApprovalRecordSchema.parse({
+        id: 'invalid-plan-approval',
+        gate: 'plan',
+        decision: 'approved',
+        actor: 'user',
+        decidedAt: '2026-11-02T00:00:00.000Z',
+        workflowRevision: 2,
+      }),
+    ).toThrow('must include');
+  });
+
   it('backfills new run metadata when reading a legacy run document', () => {
     const run = WorkflowRunSchema.parse({
       schemaVersion: 1,

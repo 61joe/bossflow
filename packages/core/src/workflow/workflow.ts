@@ -82,13 +82,8 @@ function hasCurrentApproval(run: WorkflowRun, gate: ApprovalGate): boolean {
   const revision = run.workflowRevision ?? 1;
   const approvals = run.approvals ?? [];
 
-  for (let index = approvals.length - 1; index >= 0; index -= 1) {
-    const approval = approvals[index];
-    if (
-      approval === undefined ||
-      approval.gate !== gate ||
-      approval.workflowRevision !== revision
-    ) {
+  for (const approval of [...approvals].reverse()) {
+    if (approval.gate !== gate || approval.workflowRevision !== revision) {
       continue;
     }
     if (approval.decision !== 'approved') {

@@ -21,7 +21,7 @@
     "spec:list": "OPENSPEC_TELEMETRY=0 openspec list",
     "spec:validate": "OPENSPEC_TELEMETRY=0 openspec validate --all --strict --no-interactive",
     "version-packages": "changeset version && pnpm install --lockfile-only",
-    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand",
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand --coverage",
     "test:coverage": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand --coverage",
     "typecheck": "pnpm -r --if-present typecheck",
     "prepare": "husky"
@@ -30,6 +30,7 @@
     "@changesets/cli": "^3.0.3",
     "@eslint/js": "^10.0.1",
     "@fission-ai/openspec": "1.5.0",
+    "@jest/globals": "^30.5.2",
     "@types/jest": "^30.0.0",
     "@types/node": "^26.6.6",
     "eslint": "^10.13.0",

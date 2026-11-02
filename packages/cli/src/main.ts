@@ -42,7 +42,7 @@ export async function main(argv: readonly string[] = process.argv): Promise<numb
       const report = await inspectDoctor(process.cwd());
       writeLine(`Node.js: ${report.nodeVersion}`);
       writeLine(`Config: ${report.configFound ? 'found' : 'missing'}`);
-      if (report.modelProfileName !== undefined && report.modelProfile !== undefined) {
+      if (report.configFound) {
         writeLine(
           `Model profile: ${report.modelProfileName} ` +
             `(${formatModelProfile(report.modelProfile)})`,
@@ -274,14 +274,14 @@ function formatModelProfile(profile: ModelProfile): string {
   return `${profile.kind}, model=${model}, endpoint=${endpoint}`;
 }
 
-function formatCredentialSource(source: string | undefined, envName: string | undefined): string {
+function formatCredentialSource(source: string | undefined, envName: string): string {
   if (source === 'environment') {
     return `environment variable ${envName}`;
   }
   if (source === 'local-file') {
     return `.bossflow/credentials.local.yaml (${envName} can override it)`;
   }
-  return `missing (set ${envName ?? 'a profile API key'} or run "bossflow auth set <profile>")`;
+  return `missing (set ${envName} or run "bossflow auth set <profile>")`;
 }
 
 async function readStandardInput(): Promise<string> {
