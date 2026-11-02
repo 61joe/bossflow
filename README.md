@@ -108,12 +108,12 @@ pnpm spec:validate
 
 `pre-push` 会拒绝直接推送 `main` 或 `master`。所有代码修改必须使用功能分支并通过 Pull Request 合并。
 
-功能分支必须以 `feat/`、`fix/` 或 `chore/` 开头：
+功能分支以 `feat-`、`fix-` 或 `chore-` 开头：
 
 ```text
-git switch -c feat/<short-change-name>
-git switch -c fix/<short-change-name>
-git switch -c chore/<short-change-name>
+git switch -c feat-<short-change-name>
+git switch -c fix-<short-change-name>
+git switch -c chore-<short-change-name>
 ```
 
 `main` 分支启用服务器端保护：禁止直接推送、强制推送和删除，并要求通过 Pull Request。PR 必须通过 `Branch name policy` 检查才能合并。现有 lint、typecheck、单测和 build 工作流继续运行，但不作为合并阻断条件。
