@@ -1,7 +1,11 @@
 import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { INITIAL_WORKFLOW_STAGE } from '@bossflow/core';
+import {
+  INITIAL_WORKFLOW_STAGE,
+  VerificationSettingsSchema,
+  createDefaultVerificationSettings,
+} from '@bossflow/core';
 import { parse, stringify } from 'yaml';
 import { z } from 'zod';
 
@@ -65,6 +69,7 @@ export const BossFlowConfigSchema = z
       .object({
         initialStage: z.literal(INITIAL_WORKFLOW_STAGE),
         runDirectory: z.string().min(1),
+        verification: VerificationSettingsSchema.default(createDefaultVerificationSettings()),
       })
       .strict(),
     models: ModelsConfigSchema.default(createDefaultModelsConfig()),
@@ -77,6 +82,7 @@ export function createDefaultConfig(): BossFlowConfig {
     workflow: {
       initialStage: INITIAL_WORKFLOW_STAGE,
       runDirectory: DEFAULT_RUN_DIRECTORY,
+      verification: createDefaultVerificationSettings(),
     },
     models: createDefaultModelsConfig(),
   };

@@ -4,6 +4,7 @@ import type {
   TerminalFailure,
   WorktreeMetadata,
 } from '../contracts/index.js';
+import type { ProjectProfile } from '../project-context/index.js';
 
 export type WorkflowStage =
   | 'spec'
@@ -24,6 +25,7 @@ export interface WorkflowRun {
   readonly goal: string;
   readonly modelProfile: string;
   readonly model?: string | undefined;
+  readonly projectProfile?: ProjectProfile | undefined;
   readonly stage: WorkflowStage;
   readonly workflowRevision?: number | undefined;
   readonly approvals?: readonly ApprovalRecord[] | undefined;

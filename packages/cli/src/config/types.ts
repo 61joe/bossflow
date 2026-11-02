@@ -1,4 +1,4 @@
-import type { WorkflowStage } from '@bossflow/core';
+import type { VerificationSettings, WorkflowStage } from '@bossflow/core';
 
 export type ModelsConfig = {
   readonly defaultProfile: string;
@@ -27,6 +27,7 @@ export interface BossFlowConfig {
   readonly workflow: {
     readonly initialStage: WorkflowStage;
     readonly runDirectory: string;
+    readonly verification: VerificationSettings;
   };
   readonly models: ModelsConfig;
 }

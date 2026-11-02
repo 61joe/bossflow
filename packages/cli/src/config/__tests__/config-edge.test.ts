@@ -30,6 +30,11 @@ describe('config edge cases', () => {
         models: {
           defaultProfile: 'openai',
         },
+        workflow: {
+          verification: {
+            requiredCommands: ['lint', 'typecheck', 'test', 'build'],
+          },
+        },
       });
     } finally {
       await rm(projectRoot, { recursive: true, force: true });
@@ -91,5 +96,29 @@ describe('config edge cases', () => {
 
     expect(secure.success).toBe(true);
     expect(unsupported.success).toBe(false);
+  });
+
+  it('supports verification command overrides and timeout budgets', () => {
+    const config = createDefaultConfig();
+    const parsed = BossFlowConfigSchema.parse({
+      ...config,
+      workflow: {
+        ...config.workflow,
+        verification: {
+          requiredCommands: ['lint', 'test'],
+          defaultTimeoutMs: 30_000,
+          commandOverrides: {
+            lint: { command: 'node', args: ['scripts/lint.mjs'], timeoutMs: 5_000 },
+          },
+        },
+      },
+    });
+
+    expect(parsed.workflow.verification).toMatchObject({
+      requiredCommands: ['lint', 'test'],
+      commandOverrides: {
+        lint: { command: 'node', args: ['scripts/lint.mjs'], timeoutMs: 5_000 },
+      },
+    });
   });
 });

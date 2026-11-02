@@ -18,6 +18,33 @@ The system SHALL generate and persist a technical plan after the specification s
 - **AND** the run remains at `plan`
 - **AND** the failure is recorded without entering implementation
 
+### Requirement: Capture project context before planning
+
+The system SHALL inspect the repository before creating a run and SHALL resolve project context and verification commands into a structured project profile.
+
+#### Scenario: Inspect a supported project
+
+- **WHEN** a user starts a run in a Git repository with a supported package manager
+- **THEN** the system records the repository root, worktree status, package manager, languages, frameworks, conventions, test configuration, package scripts, and resolved verification commands
+- **AND** it reads applicable `AGENTS.md`, README, OpenSpec, and test configuration as bounded planning context
+
+#### Scenario: Require confirmation for ambiguous project commands
+
+- **WHEN** required verification commands cannot be resolved or package metadata is ambiguous
+- **THEN** the system refuses to create the run by default
+- **AND** lists each ambiguity
+- **AND** proceeds only after the user explicitly confirms or configures command overrides
+
+### Requirement: Persist project profile with the run
+
+The system SHALL persist the resolved project profile in `run.json` so later stages and resume operations reuse the same repository context and verification commands.
+
+#### Scenario: Reuse a persisted project profile
+
+- **WHEN** an existing run is read during resume
+- **THEN** its project profile is restored from `run.json`
+- **AND** verification commands do not need to be inferred again
+
 ### Requirement: Gate implementation behind plan approval
 
 The system SHALL refuse to create a worktree or modify business files until the user has approved the current specification and plan revision.

@@ -27,7 +27,7 @@ describe('CLI run command', () => {
       process.env.OPENAI_API_KEY = 'openai-key';
       await main(['node', 'bossflow', 'init']);
       setAgentOutput(specification);
-      await main(['node', 'bossflow', 'run', 'Add export']);
+      await main(['node', 'bossflow', 'run', 'Add export', '--confirm-project']);
 
       await main([
         'node',
@@ -50,6 +50,7 @@ describe('CLI run command', () => {
         'bossflow',
         'run',
         'Add export with override',
+        '--confirm-project',
         '--profile',
         'local',
         '--model',
@@ -67,7 +68,14 @@ describe('CLI run command', () => {
         ),
       );
       const run = runs.find((entry) => entry.goal === 'Add export with override');
-      expect(run).toMatchObject({ modelProfile: 'local', model: 'override-model' });
+      expect(run).toMatchObject({
+        modelProfile: 'local',
+        model: 'override-model',
+        projectProfile: {
+          requiresConfirmation: true,
+          confirmedByUser: true,
+        },
+      });
       expect(stdout).toHaveBeenCalledWith('Specification created with 1 acceptance criteria.\n');
     } finally {
       process.chdir(originalCwd);
@@ -76,6 +84,33 @@ describe('CLI run command', () => {
       } else {
         process.env.LOCAL_KEY = originalLocalKey;
       }
+      if (originalOpenAiKey === undefined) {
+        delete process.env.OPENAI_API_KEY;
+      } else {
+        process.env.OPENAI_API_KEY = originalOpenAiKey;
+      }
+      stdout.mockRestore();
+      await rm(projectRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('refuses ambiguous project verification without explicit confirmation', async () => {
+    const projectRoot = await mkdtemp(path.join(tmpdir(), 'bossflow-main-run-confirm-'));
+    const originalCwd = process.cwd();
+    const originalOpenAiKey = process.env.OPENAI_API_KEY;
+    const stdout = jest.spyOn(process.stdout, 'write').mockImplementation(() => true);
+
+    try {
+      process.chdir(projectRoot);
+      process.env.OPENAI_API_KEY = 'openai-key';
+      await main(['node', 'bossflow', 'init']);
+
+      await expect(main(['node', 'bossflow', 'run', 'Add export'])).rejects.toThrow(
+        'Project verification requires confirmation',
+      );
+      await expect(readdir(path.join(projectRoot, '.bossflow', 'runs'))).rejects.toThrow();
+    } finally {
+      process.chdir(originalCwd);
       if (originalOpenAiKey === undefined) {
         delete process.env.OPENAI_API_KEY;
       } else {

@@ -3,6 +3,38 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 import { FileRunStore } from '../index.js';
+import type { ProjectProfile } from '../../project-context/index.js';
+
+const projectProfile: ProjectProfile = {
+  schemaVersion: 1,
+  repositoryRoot: '/tmp/project',
+  git: {
+    isRepository: true,
+    branch: 'main',
+    status: 'clean',
+    changedPaths: [],
+  },
+  packageManager: 'pnpm',
+  languages: ['TypeScript'],
+  frameworks: [],
+  conventionFiles: ['AGENTS.md'],
+  planningContextFiles: ['AGENTS.md', 'README.md'],
+  testConfigFiles: ['jest.config.ts'],
+  packageScripts: { test: 'jest' },
+  verificationCommands: [
+    {
+      id: 'test',
+      label: 'Test',
+      command: 'pnpm',
+      args: ['run', 'test'],
+      required: true,
+      timeoutMs: 120_000,
+    },
+  ],
+  ambiguities: [],
+  requiresConfirmation: false,
+  confirmedByUser: false,
+};
 
 describe('FileRunStore', () => {
   it('creates a run directory with request and metadata artifacts', async () => {
@@ -15,6 +47,7 @@ describe('FileRunStore', () => {
         goal: 'Add export support',
         modelProfile: 'openai',
         model: 'test-model',
+        projectProfile,
       });
 
       const request = await readFile(path.join(runsRoot, run.id, 'request.md'), 'utf8');
@@ -27,6 +60,7 @@ describe('FileRunStore', () => {
         goal: 'Add export support',
         modelProfile: 'openai',
         model: 'test-model',
+        projectProfile,
         workflowRevision: 1,
         approvals: [],
         artifacts: [{ kind: 'request', fileName: 'request.md' }],
