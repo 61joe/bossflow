@@ -6,6 +6,16 @@ export default {
     '!packages/**/src/**/index.ts',
     '!packages/cli/src/bin.ts',
   ],
+  coverageDirectory: '<rootDir>/coverage',
+  coverageReporters: ['text', 'json-summary', 'lcov'],
+  coverageThreshold: {
+    global: {
+      branches: 100,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
+  },
   extensionsToTreatAsEsm: ['.ts'],
   moduleNameMapper: {
     '^@bossflow/core$': '<rootDir>/packages/core/src/index.ts',

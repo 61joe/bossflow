@@ -131,6 +131,8 @@ pnpm build
 
 所有检查运行在一个 Linux Job 中，以减少 Actions 用量和总耗时。
 
+`pnpm test` 默认执行覆盖率测试。Jest 对 statements、branches、functions 和 lines 均强制要求 100%，覆盖率不足时本地 `pnpm check` 和 CI 都会失败。
+
 ## Release PR
 
 发布使用独立的 Changesets 发布 PR，不在普通功能 PR 合并时直接发布：

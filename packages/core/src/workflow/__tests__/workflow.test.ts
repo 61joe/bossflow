@@ -37,4 +37,13 @@ describe('workflow transitions', () => {
       to: 'build',
     });
   });
+
+  it('treats a repeated transition to the current stage as idempotent', () => {
+    const result = transitionWorkflow(baseRun, 'spec', '2026-11-02T00:02:00.000Z');
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.run).toBe(baseRun);
+    }
+  });
 });

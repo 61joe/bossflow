@@ -44,7 +44,7 @@ jobs:
       - name: Type check
         run: pnpm typecheck
 
-      - name: Unit tests
+      - name: Unit tests with 100% coverage
         run: pnpm test
 
       - name: Build

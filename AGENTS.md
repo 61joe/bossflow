@@ -36,6 +36,7 @@ pnpm spec:validate
 - 跨模块引用只能经过公共 `index.ts`；模块内部实现可以按依赖关系直接引用。
 - 不直接引用其他包的 `src`、`types.ts` 或 `constant.ts`。
 - 外部输入必须通过 Zod 校验。
+- `pnpm test` 必须运行 coverage；statements、branches、functions 和 lines 均为 100% 硬门禁。
 - 不在模块导入阶段读取环境变量或产生持久副作用。
 - API Key 不得写入 `.bossflow/config.yaml`、CLI 参数、日志或运行产物。
 - 本地凭据只能通过 `bossflow auth` 管理，并保持 `0600` 和 Git 忽略。

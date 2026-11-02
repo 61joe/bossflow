@@ -25,19 +25,22 @@ export async function resolveModelRuntime(
     );
   }
 
-  const model = options.modelOverride ?? selectedProfile.profile.model;
   const runtime =
     selectedProfile.profile.kind === 'openai-compatible'
       ? createModelRuntime({
           kind: 'openai-compatible',
           apiKey: credential.apiKey,
-          model: model ?? selectedProfile.profile.model,
+          model: options.modelOverride ?? selectedProfile.profile.model,
           baseUrl: selectedProfile.profile.baseUrl,
         })
       : createModelRuntime({
           kind: 'openai',
           apiKey: credential.apiKey,
-          ...(model === undefined ? {} : { model }),
+          ...(options.modelOverride === undefined
+            ? selectedProfile.profile.model === undefined
+              ? {}
+              : { model: selectedProfile.profile.model }
+            : { model: options.modelOverride }),
           ...(selectedProfile.profile.baseUrl === undefined
             ? {}
             : { baseUrl: selectedProfile.profile.baseUrl }),

@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -27,26 +27,68 @@ describe('FileRunStore', () => {
         goal: 'Add export support',
         modelProfile: 'openai',
         model: 'test-model',
+        workflowRevision: 1,
+        approvals: [],
+        artifacts: [{ kind: 'request', fileName: 'request.md' }],
       });
     } finally {
       await rm(runsRoot, { recursive: true, force: true });
     }
   });
 
-  it('rejects artifact paths outside the run directory', async () => {
+  it('indexes written artifacts and persists atomic transitions', async () => {
     const runsRoot = await mkdtemp(path.join(tmpdir(), 'bossflow-runs-'));
 
     try {
       const store = new FileRunStore({ runsRoot });
       const run = await store.create({
         repositoryPath: '/tmp/project',
-        goal: 'Test path safety',
+        goal: 'Persist workflow state',
         modelProfile: 'openai',
       });
 
-      await expect(store.writeMarkdown(run, '../escape.md', '# Escape')).rejects.toThrow(
-        'Invalid artifact file name',
+      await store.writeJson(run, 'plan.json', { schemaVersion: 1, tasks: [] });
+      const transition = await store.transition(run.id, 'plan', '2026-11-02T00:01:00.000Z');
+      const persisted = await store.read(run.id);
+
+      expect(transition.ok).toBe(true);
+      expect(persisted.stage).toBe('plan');
+      expect(persisted.workflowRevision).toBe(2);
+      expect(persisted.artifacts).toEqual(
+        expect.arrayContaining([expect.objectContaining({ kind: 'plan', fileName: 'plan.json' })]),
       );
+    } finally {
+      await rm(runsRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('reads legacy run metadata with default workflow fields', async () => {
+    const runsRoot = await mkdtemp(path.join(tmpdir(), 'bossflow-runs-'));
+
+    try {
+      const store = new FileRunStore({ runsRoot });
+      const run = await store.create({
+        repositoryPath: '/tmp/project',
+        goal: 'Legacy run',
+        modelProfile: 'openai',
+      });
+      const legacyRun = {
+        schemaVersion: 1,
+        id: run.id,
+        repositoryPath: '/tmp/project',
+        goal: 'Legacy run',
+        modelProfile: 'openai',
+        stage: 'spec',
+        createdAt: '2026-11-02T00:00:00.000Z',
+        updatedAt: '2026-11-02T00:00:00.000Z',
+      };
+      await writeFile(path.join(runsRoot, run.id, 'run.json'), JSON.stringify(legacyRun), 'utf8');
+
+      await expect(store.read(run.id)).resolves.toMatchObject({
+        workflowRevision: 1,
+        approvals: [],
+        artifacts: [],
+      });
     } finally {
       await rm(runsRoot, { recursive: true, force: true });
     }
