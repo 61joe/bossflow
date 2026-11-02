@@ -113,6 +113,25 @@ export interface RequirementCoverage {
   readonly evidence: readonly string[];
 }
 
+export type ImplementationResultStatus = 'completed' | 'blocked';
+
+export interface ImplementationResult {
+  readonly schemaVersion: 1;
+  readonly status: ImplementationResultStatus;
+  readonly summary: string;
+  readonly changedPaths: readonly string[];
+  readonly testChanges: readonly string[];
+  readonly notes: readonly string[];
+}
+
+export interface ReviewResult {
+  readonly schemaVersion: 1;
+  readonly summary: string;
+  readonly findings: readonly ReviewFinding[];
+  readonly requirementCoverage: readonly RequirementCoverage[];
+  readonly unresolvedFindingIds: readonly string[];
+}
+
 export interface RunSummary {
   readonly schemaVersion: 1;
   readonly runId: string;
