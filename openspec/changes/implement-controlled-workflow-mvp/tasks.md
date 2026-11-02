@@ -1,10 +1,10 @@
 ## 1. Workflow Contracts
 
-- [ ] 1.1 Define Zod schemas and TypeScript types for technical plans, task items, approvals, worktree metadata, verification commands, verification results, review findings, requirement coverage, and summaries.
-- [ ] 1.2 Extend `WorkflowRun` and `run.json` with backward-compatible workflow revision, approval ledger, worktree references, artifact references, and terminal failure state.
-- [ ] 1.3 Add explicit plan-approval and review-approval gates to the workflow transition model.
-- [ ] 1.4 Persist workflow state atomically and make stage transitions idempotent for retries and resume.
-- [ ] 1.5 Add a shared secret-redaction utility for command output, errors, run artifacts, and summaries.
+- [x] 1.1 Define Zod schemas and TypeScript types for technical plans, task items, approvals, worktree metadata, verification commands, verification results, review findings, requirement coverage, and summaries.
+- [x] 1.2 Extend `WorkflowRun` and `run.json` with backward-compatible workflow revision, approval ledger, worktree references, artifact references, and terminal failure state.
+- [x] 1.3 Add explicit plan-approval and review-approval gates to the workflow transition model.
+- [x] 1.4 Persist workflow state atomically and make stage transitions idempotent for retries and resume.
+- [x] 1.5 Add a shared secret-redaction utility for command output, errors, run artifacts, and summaries.
 
 ## 2. Specialist Agents
 
