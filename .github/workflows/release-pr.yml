@@ -1,9 +1,6 @@
 name: Release PR
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 permissions:
@@ -84,10 +81,10 @@ jobs:
               --base main \
               --head chore/release \
               --title "chore: version packages" \
-              --body "Automated release PR generated from pending Changesets. Merging this PR creates the corresponding GitHub Release; npm publishing is not enabled." \
+              --body "Manually triggered release PR generated from pending Changesets. Merging this PR creates the corresponding GitHub Release; npm publishing is not enabled." \
               >/dev/null
           else
             gh pr edit "$existing_pr" \
               --title "chore: version packages" \
-              --body "Automated release PR generated from pending Changesets. Merging this PR creates the corresponding GitHub Release; npm publishing is not enabled."
+              --body "Manually triggered release PR generated from pending Changesets. Merging this PR creates the corresponding GitHub Release; npm publishing is not enabled."
           fi
