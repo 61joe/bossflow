@@ -18,6 +18,11 @@ describe('project config', () => {
         workflow: {
           initialStage: 'spec',
           runDirectory: '.bossflow/runs',
+          verification: {
+            requiredCommands: ['lint', 'typecheck', 'test', 'build'],
+            defaultTimeoutMs: 120000,
+            commandOverrides: {},
+          },
         },
         models: {
           defaultProfile: 'openai',

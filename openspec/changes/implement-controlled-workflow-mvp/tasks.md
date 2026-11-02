@@ -17,11 +17,11 @@
 
 ## 3. Project Context And Commands
 
-- [ ] 3.1 Detect repository root, Git status, package manager, language/framework files, and existing project conventions.
-- [ ] 3.2 Read applicable `AGENTS.md`, README, OpenSpec context, package scripts, and test configuration as planning context.
-- [ ] 3.3 Detect and validate lint, typecheck, test, and build commands, with user confirmation for ambiguous repositories.
-- [ ] 3.4 Add project configuration for required verification commands, timeout budgets, and optional command overrides.
-- [ ] 3.5 Persist the resolved project profile with the run so resume uses the same context and commands.
+- [x] 3.1 Detect repository root, Git status, package manager, language/framework files, and existing project conventions.
+- [x] 3.2 Read applicable `AGENTS.md`, README, OpenSpec context, package scripts, and test configuration as planning context.
+- [x] 3.3 Detect and validate lint, typecheck, test, and build commands, with user confirmation for ambiguous repositories.
+- [x] 3.4 Add project configuration for required verification commands, timeout budgets, and optional command overrides.
+- [x] 3.5 Persist the resolved project profile with the run so resume uses the same context and commands.
 
 ## 4. Worktree And Implementation
 

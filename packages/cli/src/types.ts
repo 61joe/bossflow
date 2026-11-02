@@ -1,6 +1,7 @@
 export interface RunCommandOptions {
   readonly model?: string;
   readonly profile?: string;
+  readonly confirmProject?: boolean;
 }
 
 export interface ModelAddCommandOptions {

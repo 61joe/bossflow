@@ -7,6 +7,7 @@ import {
   TerminalFailureSchema,
   WorktreeMetadataSchema,
 } from '../contracts/index.js';
+import { ProjectProfileSchema } from '../project-context/index.js';
 import { INITIAL_WORKFLOW_REVISION, WORKFLOW_SCHEMA_VERSION, WORKFLOW_STAGES } from './constant.js';
 import type { WorkflowRun } from './types.js';
 
@@ -21,6 +22,7 @@ export const WorkflowRunSchema = z
     goal: NonEmptyStringSchema,
     modelProfile: NonEmptyStringSchema,
     model: NonEmptyStringSchema.optional(),
+    projectProfile: ProjectProfileSchema.optional(),
     stage: z.enum(WORKFLOW_STAGES),
     workflowRevision: z.number().int().positive().default(INITIAL_WORKFLOW_REVISION),
     approvals: z.array(ApprovalRecordSchema).default([]),

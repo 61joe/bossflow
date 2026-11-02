@@ -56,6 +56,7 @@ export class FileRunStore implements RunStore {
       goal,
       modelProfile: input.modelProfile,
       ...(input.model === undefined ? {} : { model: input.model }),
+      ...(input.projectProfile === undefined ? {} : { projectProfile: input.projectProfile }),
       stage: INITIAL_WORKFLOW_STAGE,
       workflowRevision: INITIAL_WORKFLOW_REVISION,
       approvals: [],

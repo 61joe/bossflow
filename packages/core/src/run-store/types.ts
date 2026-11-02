@@ -4,12 +4,14 @@ import type {
   WorkflowRun,
   WorkflowStage,
 } from '../workflow/index.js';
+import type { ProjectProfile } from '../project-context/index.js';
 
 export interface CreateRunInput {
   readonly repositoryPath: string;
   readonly goal: string;
   readonly modelProfile: string;
   readonly model?: string;
+  readonly projectProfile?: ProjectProfile;
 }
 
 export interface FileRunStoreOptions {

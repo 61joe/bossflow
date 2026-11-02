@@ -64,6 +64,38 @@ node packages/cli/dist/bin.js run "增加导出功能" --profile local
 
 安全使用的完整说明见 [模型配置与凭据管理](docs/MODEL_CONFIGURATION.md)。
 
+## 项目上下文和验证命令
+
+`bossflow run` 会在调用模型前识别 Git 根目录和工作区状态、包管理器、语言、框架、项目约定、测试配置及验证脚本。精简后的项目档案会写入对应运行的 `run.json`。
+
+默认要求检测 `lint`、`typecheck`、`test` 和 `build`。缺少必要命令或包管理器存在歧义时，命令会拒绝运行并列出原因。确认检测结果后可以显式传入：
+
+```text
+node packages/cli/dist/bin.js run "增加导出功能" --confirm-project
+```
+
+也可以在 `.bossflow/config.yaml` 中固定命令和超时：
+
+```yaml
+workflow:
+  verification:
+    requiredCommands:
+      - lint
+      - typecheck
+      - test
+      - build
+    defaultTimeoutMs: 120000
+    commandOverrides:
+      test:
+        command: pnpm
+        args:
+          - run
+          - test
+        timeoutMs: 300000
+```
+
+完整说明见 [项目上下文与验证命令](docs/PROJECT_CONTEXT.md)。
+
 ## 项目结构
 
 ```text
@@ -79,6 +111,7 @@ packages/
 - [技术选型](docs/TECH_STACK.md)
 - [TypeScript 代码规范](docs/TS_STYLE_GUIDE.md)
 - [模型配置与凭据管理](docs/MODEL_CONFIGURATION.md)
+- [项目上下文与验证命令](docs/PROJECT_CONTEXT.md)
 
 Agents SDK 的实现参考 [OpenAI 官方文档](https://developers.openai.com/api/docs/guides/agents-sdk)。
 

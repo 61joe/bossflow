@@ -2,7 +2,12 @@ import path from 'node:path';
 
 import { password } from '@inquirer/prompts';
 import { Command, CommanderError } from 'commander';
-import { FileRunStore, generateSpecification, probeModelRuntime } from '@bossflow/core';
+import {
+  FileRunStore,
+  generateSpecification,
+  inspectProject,
+  probeModelRuntime,
+} from '@bossflow/core';
 
 import {
   CLI_NAME,
@@ -74,6 +79,7 @@ export async function main(argv: readonly string[] = process.argv): Promise<numb
     .argument('<goal>', 'development goal')
     .option('--profile <profile>', 'model profile from .bossflow/config.yaml')
     .option('--model <model>', 'override the model identifier for this run')
+    .option('--confirm-project', 'accept inferred project verification commands')
     .action(async (goal: string, options: RunCommandOptions) => {
       await executeRun(process.cwd(), goal, options);
     });
@@ -227,18 +233,32 @@ async function executeRun(
   goal: string,
   options: RunCommandOptions,
 ): Promise<void> {
+  const config = await loadConfig(projectRoot);
+  const projectContext = await inspectProject(projectRoot, {
+    verification: config.workflow.verification,
+  });
+  if (projectContext.profile.requiresConfirmation && options.confirmProject !== true) {
+    throw new Error(
+      'Project verification requires confirmation:\n' +
+        projectContext.profile.ambiguities.map((ambiguity) => `- ${ambiguity}`).join('\n') +
+        '\nRe-run with --confirm-project or configure workflow.verification.commandOverrides.',
+    );
+  }
   const resolvedRuntime = await resolveModelRuntime({
     projectRoot,
     ...(options.profile === undefined ? {} : { profileName: options.profile }),
     ...(options.model === undefined ? {} : { modelOverride: options.model }),
   });
-  const config = await loadConfig(projectRoot);
   const runsRoot = path.resolve(projectRoot, config.workflow.runDirectory);
   const store = new FileRunStore({ runsRoot });
   const run = await store.create({
     repositoryPath: projectRoot,
     goal,
     modelProfile: resolvedRuntime.profileName,
+    projectProfile: {
+      ...projectContext.profile,
+      confirmedByUser: options.confirmProject === true,
+    },
     ...(resolvedRuntime.runtime.model === undefined
       ? {}
       : { model: resolvedRuntime.runtime.model }),
@@ -248,6 +268,11 @@ async function executeRun(
   writeLine(`Artifacts: ${path.join(runsRoot, run.id)}`);
   writeLine(
     `Model: ${resolvedRuntime.profileName}; credential source: ${resolvedRuntime.credentialSource}.`,
+  );
+  writeLine(
+    `Project: ${projectContext.profile.packageManager}; ` +
+      `Git ${projectContext.profile.git.status}; ` +
+      `${projectContext.profile.verificationCommands.length} verification commands.`,
   );
 
   const specification = await generateSpecification(goal, {
