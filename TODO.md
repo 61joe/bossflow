@@ -11,7 +11,13 @@
   ```
 
 - [ ] Add a temporary Changeset in a `chore/` PR and merge it to main.
-- [ ] Verify the Release PR workflow automatically creates or updates the `chore/release` PR.
+- [ ] Manually trigger the Release PR workflow from `main`:
+
+  ```text
+  gh workflow run release-pr.yml --repo 61joe/bossflow --ref main
+  ```
+
+- [ ] Verify the manually triggered Release PR workflow creates or updates the `chore/release` PR.
 - [ ] Verify `Branch name policy` and CI run automatically without closing or reopening the release PR.
 - [ ] Verify the release PR creates a GitHub Release when merged.
 

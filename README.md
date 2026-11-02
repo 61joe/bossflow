@@ -138,14 +138,27 @@ pnpm build
 发布使用独立的 Changesets 发布 PR，不在普通功能 PR 合并时直接发布：
 
 1. 功能 PR 必须包含 `.changeset/*.md` 版本说明。
-2. 合并到 `main` 后，`Release PR` 工作流创建或更新 `chore/release` 分支和 PR。
-3. 发布 PR 合并后，`GitHub Release` 工作流运行完整检查、创建 `vX.Y.Z` Tag 和 GitHub Release。
-4. 当前不执行 `npm publish`；npm Registry 发布将在包名、许可证和认证确定后单独启用。
+2. 合并到 `main` 只累积待发布的 Changesets，不会自动创建发布 PR。
+3. 需要发布时，从 `main` 手动运行 `Release PR` 工作流；该工作流创建或更新 `chore/release` 分支和 PR。
+4. 发布 PR 合并后，`GitHub Release` 工作流运行完整检查、创建 `vX.Y.Z` Tag 和 GitHub Release。
+5. 当前不执行 `npm publish`；npm Registry 发布将在包名、许可证和认证确定后单独启用。
 
 本地添加 changeset：
 
 ```text
 pnpm changeset
+```
+
+手动创建或更新发布 PR：
+
+```text
+gh workflow run release-pr.yml --repo 61joe/bossflow --ref main
+```
+
+`Release PR` 仅支持手动触发，普通 PR 合并不会启动该工作流。运行后会等待数秒，可通过以下命令查看执行状态：
+
+```text
+gh run list --repo 61joe/bossflow --workflow release-pr.yml --limit 1
 ```
 
 发布 PR 自动化需要仓库 secret `RELEASE_PR_TOKEN`。使用仅授权当前仓库的 GitHub fine-grained PAT，并授予：
