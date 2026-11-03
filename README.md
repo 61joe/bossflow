@@ -104,6 +104,14 @@ Core 提供基于 Git Worktree 的实现协调层。默认拒绝在脏主工作�
 
 完整说明见 [Worktree 与实现阶段](docs/WORKTREE_IMPLEMENTATION.md)。
 
+## Verification、Review 与 Summary
+
+实现完成后，BossFlow 在隔离 Worktree 中按顺序执行已确认的验证命令，持久化真实退出码、耗时和有界输出。必需命令失败会阻断流程，成功则进入独立 Review。
+
+Review 会核对 Specification、批准 Plan、实现 Diff 和验证证据，并把每个验收标准映射到覆盖状态。未解决的 P0/P1 会阻止 Review 完成。最终生成 `review.md`、`summary.json` 和 `summary.md`，列出证据、风险与待人工批准的外部动作。
+
+完整说明见 [Verification、Review 与 Summary](docs/VERIFICATION_REVIEW.md)。
+
 ## 项目结构
 
 ```text
@@ -121,6 +129,7 @@ packages/
 - [模型配置与凭据管理](docs/MODEL_CONFIGURATION.md)
 - [项目上下文与验证命令](docs/PROJECT_CONTEXT.md)
 - [Worktree 与实现阶段](docs/WORKTREE_IMPLEMENTATION.md)
+- [Verification、Review 与 Summary](docs/VERIFICATION_REVIEW.md)
 
 Agents SDK 的实现参考 [OpenAI 官方文档](https://developers.openai.com/api/docs/guides/agents-sdk)。
 

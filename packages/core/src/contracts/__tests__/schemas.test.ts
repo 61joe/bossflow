@@ -110,6 +110,27 @@ describe('workflow contracts', () => {
   });
 });
 
+describe('requirement coverage contracts', () => {
+  it('requires evidence for covered and partial requirement mappings', () => {
+    expect(() =>
+      RequirementCoverageSchema.parse({
+        requirementId: 'workflow-runs:plan-approval',
+        criterion: 'Build cannot start without approval.',
+        status: 'covered',
+        evidence: [],
+      }),
+    ).toThrow('must include at least one evidence item');
+    expect(
+      RequirementCoverageSchema.parse({
+        requirementId: 'workflow-runs:plan-approval',
+        criterion: 'Build cannot start without approval.',
+        status: 'missing',
+        evidence: [],
+      }),
+    ).toMatchObject({ status: 'missing' });
+  });
+});
+
 describe('specialist agent contracts', () => {
   it('validates implementation results', () => {
     expect(

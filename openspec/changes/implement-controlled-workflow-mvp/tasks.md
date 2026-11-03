@@ -35,13 +35,13 @@
 
 ## 5. Verification, Review, And Summary
 
-- [ ] 5.1 Implement a command runner using `execa` with argument arrays, timeouts, AbortSignal, bounded output, and real exit codes.
-- [ ] 5.2 Persist `verification.json` and `verification.md` with command, duration, status, and redacted output.
-- [ ] 5.3 Stop the workflow on required command failure and record an actionable blocked or failed state.
-- [ ] 5.4 Feed the specification, approved plan, diff summary, and verification evidence to the Reviewer Agent.
-- [ ] 5.5 Write structured review findings and map each acceptance criterion to implementation and verification evidence.
-- [ ] 5.6 Prevent review completion when unresolved high-severity findings remain.
-- [ ] 5.7 Generate `summary.md` with completed work, evidence, review status, remaining risks, and pending external actions.
+- [x] 5.1 Implement a command runner using `execa` with argument arrays, timeouts, AbortSignal, bounded output, and real exit codes.
+- [x] 5.2 Persist `verification.json` and `verification.md` with command, duration, status, and redacted output.
+- [x] 5.3 Stop the workflow on required command failure and record an actionable blocked or failed state.
+- [x] 5.4 Feed the specification, approved plan, diff summary, and verification evidence to the Reviewer Agent.
+- [x] 5.5 Write structured review findings and map each acceptance criterion to implementation and verification evidence.
+- [x] 5.6 Prevent review completion when unresolved high-severity findings remain.
+- [x] 5.7 Generate `summary.md` with completed work, evidence, review status, remaining risks, and pending external actions.
 
 ## 6. CLI And Approvals
 
