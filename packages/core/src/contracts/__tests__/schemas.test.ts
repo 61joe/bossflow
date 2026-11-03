@@ -64,19 +64,6 @@ describe('workflow contracts', () => {
     ).toMatchObject({ status: 'covered' });
   });
 
-  it('allows external-action approvals without artifact metadata', () => {
-    expect(
-      ApprovalRecordSchema.parse({
-        id: 'external-approval',
-        gate: 'external-action',
-        decision: 'approved',
-        actor: 'user',
-        decidedAt: '2026-11-02T00:00:00.000Z',
-        workflowRevision: 4,
-      }),
-    ).toMatchObject({ gate: 'external-action' });
-  });
-
   it('rejects plan approvals without artifact metadata', () => {
     expect(() =>
       ApprovalRecordSchema.parse({
@@ -107,6 +94,45 @@ describe('workflow contracts', () => {
       approvals: [],
       artifacts: [],
     });
+  });
+});
+
+describe('approval action contracts', () => {
+  it('requires actions for external approvals and rejects actions on review gates', () => {
+    expect(
+      ApprovalRecordSchema.parse({
+        id: 'external-approval',
+        gate: 'external-action',
+        decision: 'approved',
+        actor: 'user',
+        decidedAt: '2026-11-02T00:00:00.000Z',
+        workflowRevision: 4,
+        actions: ['commit', 'pr'],
+      }),
+    ).toMatchObject({ gate: 'external-action', actions: ['commit', 'pr'] });
+    expect(() =>
+      ApprovalRecordSchema.parse({
+        id: 'missing-actions',
+        gate: 'external-action',
+        decision: 'approved',
+        actor: 'user',
+        decidedAt: '2026-11-02T00:00:00.000Z',
+        workflowRevision: 4,
+      }),
+    ).toThrow('must include at least one action');
+    expect(() =>
+      ApprovalRecordSchema.parse({
+        id: 'invalid-review-actions',
+        gate: 'review',
+        decision: 'approved',
+        actor: 'user',
+        decidedAt: '2026-11-02T00:00:00.000Z',
+        workflowRevision: 4,
+        artifactFileName: 'review.json',
+        artifactSha256: 'a'.repeat(64),
+        actions: ['commit'],
+      }),
+    ).toThrow('Only external-action approvals may include actions');
   });
 });
 

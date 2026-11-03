@@ -1,2 +1,8 @@
 export { main } from './main.js';
-export type { AuthSetCommandOptions, ModelAddCommandOptions, RunCommandOptions } from './types.js';
+export * from './workflow/index.js';
+export type {
+  ApproveCommandOptions,
+  AuthSetCommandOptions,
+  ModelAddCommandOptions,
+  RunCommandOptions,
+} from './types.js';

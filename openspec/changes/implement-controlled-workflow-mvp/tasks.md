@@ -45,14 +45,14 @@
 
 ## 6. CLI And Approvals
 
-- [ ] 6.1 Change `bossflow run` to generate specification and technical plan, then stop at the plan-approval gate by default.
-- [ ] 6.2 Add `bossflow run --stop-after spec` to preserve specification-only execution.
-- [ ] 6.3 Add `bossflow status <run-id>` with persisted stage, approvals, artifacts, verification, review, and next action.
-- [ ] 6.4 Add `bossflow approve <run-id> --gate plan` with revision-aware approval recording.
-- [ ] 6.5 Add `bossflow approve <run-id> --gate review` for explicitly requested commit, push, merge, or PR actions.
-- [ ] 6.6 Add `bossflow resume <run-id>` that continues only from the first incomplete stage and never bypasses a gate.
-- [ ] 6.7 Define stable non-zero exit codes and user-facing recovery messages for blocked, failed, missing, and unapproved runs.
-- [ ] 6.8 Update CLI help and documentation for the new commands and default behavior change.
+- [x] 6.1 Change `bossflow run` to generate specification and technical plan, then stop at the plan-approval gate by default.
+- [x] 6.2 Add `bossflow run --stop-after spec` to preserve specification-only execution.
+- [x] 6.3 Add `bossflow status <run-id>` with persisted stage, approvals, artifacts, verification, review, and next action.
+- [x] 6.4 Add `bossflow approve <run-id> --gate plan` with revision-aware approval recording.
+- [x] 6.5 Add `bossflow approve <run-id> --gate review` for explicitly requested commit, push, merge, or PR actions.
+- [x] 6.6 Add `bossflow resume <run-id>` that continues only from the first incomplete stage and never bypasses a gate.
+- [x] 6.7 Define stable non-zero exit codes and user-facing recovery messages for blocked, failed, missing, and unapproved runs.
+- [x] 6.8 Update CLI help and documentation for the new commands and default behavior change.
 
 ## 7. Codex Adapter
 

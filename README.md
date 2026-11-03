@@ -37,9 +37,14 @@ node packages/cli/dist/bin.js doctor
 node packages/cli/dist/bin.js init
 node packages/cli/dist/bin.js model list
 node packages/cli/dist/bin.js run "增加一个导出功能"
+node packages/cli/dist/bin.js status <run-id>
+node packages/cli/dist/bin.js approve <run-id> --gate plan
+node packages/cli/dist/bin.js resume <run-id>
 ```
 
-`run` 当前完成最小闭环：在 `.bossflow/runs/<run-id>/` 中创建运行记录，然后通过 OpenAI Agents SDK 生成结构化规格 `spec.json` 和可读版本 `spec.md`。计划、实现、验证和审查阶段将在后续接入。
+`run` 默认在 `.bossflow/runs/<run-id>/` 中生成 Specification 和 Technical Plan，然后停在计划审批门禁。使用 `--stop-after spec` 可以保留只生成规格的模式。审批计划后，`resume` 会在隔离 Worktree 中执行实现、验证和 Review，并停在 Review 审批门禁。
+
+完整的命令、审批动作和退出码见 [CLI 受控工作流](docs/CLI_WORKFLOW.md)。
 
 ## 模型和凭据
 
@@ -130,6 +135,7 @@ packages/
 - [项目上下文与验证命令](docs/PROJECT_CONTEXT.md)
 - [Worktree 与实现阶段](docs/WORKTREE_IMPLEMENTATION.md)
 - [Verification、Review 与 Summary](docs/VERIFICATION_REVIEW.md)
+- [CLI 受控工作流](docs/CLI_WORKFLOW.md)
 
 Agents SDK 的实现参考 [OpenAI 官方文档](https://developers.openai.com/api/docs/guides/agents-sdk)。
 

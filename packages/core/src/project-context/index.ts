@@ -5,7 +5,11 @@ export {
   VerificationSettingsSchema,
   createDefaultVerificationSettings,
 } from './schema.js';
-export { inspectProject, ProjectContextInspector } from './project-context.js';
+export {
+  inspectProject,
+  ProjectContextInspector,
+  readProjectContextDocuments,
+} from './project-context.js';
 export { GitRepositoryInspector, isNotRepositoryError } from './git-inspector.js';
 export { VerificationCommandResolver } from './verification-command-resolver.js';
 export type {

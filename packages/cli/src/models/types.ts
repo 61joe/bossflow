@@ -14,4 +14,5 @@ export interface ResolvedModelRuntime {
   readonly profileName: string;
   readonly profile: ModelProfile;
   readonly credentialSource: CredentialSource;
+  readonly redactionSecrets: readonly string[];
 }

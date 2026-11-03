@@ -54,5 +54,6 @@ export async function resolveModelRuntime(
     profileName: selectedProfile.name,
     profile: selectedProfile.profile,
     credentialSource: credential.source,
+    redactionSecrets: [credential.apiKey],
   };
 }
