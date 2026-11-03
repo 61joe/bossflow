@@ -66,7 +66,7 @@ packages/
 
 | 分类                 | 选型                     | 用途                                     |
 | -------------------- | ------------------------ | ---------------------------------------- |
-| TypeScript 运行      | `tsx`                    | 本地运行和调试 TypeScript CLI            |
+| 本地 CLI 运行        | Node.js 24               | 构建后直接运行编译产物，避免额外运行时   |
 | 单元/集成测试        | `jest`                   | 工作流、Schema、工具和 Adapter 测试      |
 | TypeScript 测试转换  | `ts-jest`                | 在 Jest 中编译并执行 TypeScript          |
 | Jest 类型            | `@types/jest`            | Jest 全局 API 类型                       |
@@ -107,6 +107,14 @@ Jest 使用 `ts-jest` 的 ESM 配置，并在测试脚本中启用 Jest 的 ESM 
 - 覆盖率使用 Jest 内置 coverage，不额外引入第二套测试或覆盖率框架。
 
 `@openai/agents`、Jest、ts-jest 和 Node.js 版本之间的 ESM 兼容性是初始化阶段必须优先验证的技术风险。
+
+### 测试层级
+
+- 单元测试位于各模块的 `__tests__/`，验证 Schema、状态迁移、权限边界和失败分支。
+- 跨包集成测试位于根目录 `tests/integration/`，组合 Core、CLI、真实 Git worktree 和真实命令执行。
+- 集成夹具通过临时 Git 仓库动态创建，覆盖 clean、dirty、multi-package、missing-command 和 failing-verification。
+- 常规测试使用 fake Agent/runtime，不访问网络，也不产生模型费用。
+- 真实模型 smoke 使用 `pnpm smoke:model`，仅用于人工发布前验证，不进入 CI 硬门禁。
 
 ## 4. 环境变量策略
 

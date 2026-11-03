@@ -31,6 +31,7 @@ pnpm check
 pnpm build
 pnpm test
 pnpm test:coverage
+pnpm smoke:model
 pnpm lint:staged
 pnpm spec:list
 pnpm spec:validate
@@ -52,6 +53,9 @@ node packages/cli/dist/bin.js resume <run-id>
 `run` 默认在 `.bossflow/runs/<run-id>/` 中生成 Specification 和 Technical Plan，然后停在计划审批门禁。使用 `--stop-after spec` 可以保留只生成规格的模式。审批计划后，`resume` 会在隔离 Worktree 中执行实现、验证和 Review，并停在 Review 审批门禁。
 
 完整的命令、审批动作和退出码见 [CLI 受控工作流](docs/CLI_WORKFLOW.md)。
+
+测试夹具、fake runtime、跨包集成测试和真实模型 smoke 的说明见
+[BossFlow 测试策略](docs/TEST_STRATEGY.md)。
 
 ## 模型和凭据
 

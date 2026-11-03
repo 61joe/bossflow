@@ -20,7 +20,7 @@ The system SHALL generate and persist a technical plan after the specification s
 
 ### Requirement: Capture project context before planning
 
-The system SHALL inspect the repository before creating a run and SHALL resolve project context and verification commands into a structured project profile.
+The system SHALL inspect the repository before creating a run and SHALL resolve project context and verification commands into a structured project profile. The persisted project profile commands are authoritative for verification; technical-plan command recommendations MUST NOT replace or expand them implicitly.
 
 #### Scenario: Inspect a supported project
 
@@ -34,6 +34,12 @@ The system SHALL inspect the repository before creating a run and SHALL resolve 
 - **THEN** the system refuses to create the run by default
 - **AND** lists each ambiguity
 - **AND** proceeds only after the user explicitly confirms or configures command overrides
+
+#### Scenario: Keep execution commands anchored to the project profile
+
+- **WHEN** the technical plan recommends verification commands that differ from the persisted project profile
+- **THEN** verification executes the persisted project profile commands
+- **AND** the Review evidence identifies the commands that actually ran
 
 ### Requirement: Persist project profile with the run
 
@@ -80,6 +86,7 @@ The system SHALL perform implementation and verification in a dedicated Git work
 - **WHEN** the Implementer changes files
 - **THEN** those changes appear only in the run worktree
 - **AND** the configured main working tree remains unchanged
+- **AND** the main branch HEAD, index, and tracked file content remain unchanged until an explicitly approved external action
 
 #### Scenario: Reject a dirty main worktree
 

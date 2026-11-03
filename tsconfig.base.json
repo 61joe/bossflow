@@ -19,7 +19,8 @@
     "skipLibCheck": true,
     "paths": {
       "@bossflow/core": ["./packages/core/src/index.ts"],
-      "@bossflow/adapters": ["./packages/adapters/src/index.ts"]
+      "@bossflow/adapters": ["./packages/adapters/src/index.ts"],
+      "@bossflow/cli": ["./packages/cli/src/index.ts"]
     }
   }
 }
