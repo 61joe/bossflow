@@ -16,7 +16,13 @@ cp .env.example .env
 
 在 `.env` 中填写 `OPENAI_API_KEY`。真实密钥不会提交到 Git。
 
-项目级 `$bossflow` Skill 模板位于 `packages/adapters/assets/codex/bossflow/SKILL.md`。将其安装到目标项目的 `.agents/skills/bossflow/SKILL.md` 后，可以在 Codex Desktop 新聊天中显式唤起。
+项目级 `$bossflow` Skill 可以通过 CLI 安装到目标项目：
+
+```text
+bossflow adapter install codex
+```
+
+使用 `--project <path>` 指定其他项目。默认不会覆盖同名的不同 Skill；确认后可显式传入 `--overwrite`。`@bossflow/adapters` 同时提供幂等的 `installCodexSkill()` / `CodexAdapter.installSkill()` API。
 
 ## 常用命令
 
@@ -35,6 +41,7 @@ pnpm spec:validate
 ```text
 node packages/cli/dist/bin.js doctor
 node packages/cli/dist/bin.js init
+node packages/cli/dist/bin.js adapter install codex
 node packages/cli/dist/bin.js model list
 node packages/cli/dist/bin.js run "增加一个导出功能"
 node packages/cli/dist/bin.js status <run-id>

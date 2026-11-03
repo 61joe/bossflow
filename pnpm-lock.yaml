@@ -226,6 +226,9 @@ importers:
 
   packages/cli:
     dependencies:
+      '@bossflow/adapters':
+        specifier: workspace:*
+        version: link:../adapters
       '@bossflow/core':
         specifier: workspace:*
         version: link:../core

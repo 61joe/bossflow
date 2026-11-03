@@ -1,5 +1,21 @@
 # CLI 受控工作流
 
+## 安装 Codex Skill
+
+在当前项目安装 `$bossflow` Skill：
+
+```text
+bossflow adapter install codex
+```
+
+安装到指定项目：
+
+```text
+bossflow adapter install codex --project /path/to/project
+```
+
+目标路径为 `.agents/skills/bossflow/SKILL.md`。重复安装相同版本是幂等的；如果同名文件不同，命令返回退出码 `8` 且不覆盖。用户检查后可使用 `--overwrite` 显式替换。
+
 ## 启动运行
 
 默认 `run` 会生成 Specification 和 Technical Plan，然后停在计划审批门禁：
@@ -73,5 +89,6 @@ bossflow resume <run-id>
 | `5`    | Run 被验证、Review 或实现结果阻断  |
 | `6`    | Run 失败或 artifact 完整性校验失败 |
 | `7`    | 缺少当前阶段必需的 artifact        |
+| `8`    | Adapter Skill 安装发生同名冲突     |
 
 错误输出会附带可执行的恢复命令，例如补做审批或运行 `bossflow status` 查看证据。

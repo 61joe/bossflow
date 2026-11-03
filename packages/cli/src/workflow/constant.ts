@@ -15,6 +15,7 @@ export const CLI_EXIT_CODES = {
   BLOCKED: 5,
   FAILED: 6,
   MISSING_ARTIFACT: 7,
+  ADAPTER_CONFLICT: 8,
 } as const;
 
 export const DEFAULT_CODING_AGENT_ID = 'codex';
