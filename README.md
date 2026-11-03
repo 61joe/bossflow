@@ -96,6 +96,14 @@ workflow:
 
 完整说明见 [项目上下文与验证命令](docs/PROJECT_CONTEXT.md)。
 
+## 隔离实现
+
+Core 提供基于 Git Worktree 的实现协调层。默认拒绝在脏主工作区创建实现工作树，实现完成后校验批准路径、采集完整 patch、敏感路径和实现结果，并持久化 `implementation.json` 与 `implementation.patch`。
+
+恢复已完成的实现不会再次调用 Implementer；Worktree 清理和孤儿目录检测需要显式调用，不会自动删除用户文件。
+
+完整说明见 [Worktree 与实现阶段](docs/WORKTREE_IMPLEMENTATION.md)。
+
 ## 项目结构
 
 ```text
@@ -112,6 +120,7 @@ packages/
 - [TypeScript 代码规范](docs/TS_STYLE_GUIDE.md)
 - [模型配置与凭据管理](docs/MODEL_CONFIGURATION.md)
 - [项目上下文与验证命令](docs/PROJECT_CONTEXT.md)
+- [Worktree 与实现阶段](docs/WORKTREE_IMPLEMENTATION.md)
 
 Agents SDK 的实现参考 [OpenAI 官方文档](https://developers.openai.com/api/docs/guides/agents-sdk)。
 

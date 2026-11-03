@@ -22,6 +22,7 @@ export interface WorktreeMetadata {
   readonly baseCommit: string;
   readonly createdAt: string;
   readonly status: WorktreeStatus;
+  readonly cleanedAt?: string | undefined;
 }
 
 export type ArtifactKind =

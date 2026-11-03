@@ -53,6 +53,7 @@ export const WorktreeMetadataSchema = z
     baseCommit: NonEmptyStringSchema,
     createdAt: TimestampSchema,
     status: z.enum(WORKTREE_STATUSES),
+    cleanedAt: TimestampSchema.optional(),
   })
   .strict();
 

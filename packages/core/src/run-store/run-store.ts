@@ -155,6 +155,11 @@ export class FileRunStore implements RunStore {
     });
   }
 
+  async readText(run: WorkflowRun, fileName: string): Promise<string> {
+    assertValidRunId(run.id);
+    return readFile(this.#artifactPath(run, fileName), 'utf8');
+  }
+
   #runDirectory(run: WorkflowRun): string {
     assertValidRunId(run.id);
     return path.join(this.#runsRoot, run.id);
