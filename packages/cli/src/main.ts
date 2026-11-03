@@ -1,20 +1,9 @@
-import path from 'node:path';
-
 import { password } from '@inquirer/prompts';
-import { Command, CommanderError } from 'commander';
-import {
-  FileRunStore,
-  generateSpecification,
-  inspectProject,
-  probeModelRuntime,
-} from '@bossflow/core';
+import { Command, CommanderError, InvalidArgumentError } from 'commander';
+import { APPROVAL_ACTIONS, probeModelRuntime } from '@bossflow/core';
+import type { ApprovalAction } from '@bossflow/core';
 
-import {
-  CLI_NAME,
-  CLI_VERSION,
-  SPECIFICATION_JSON_FILE,
-  SPECIFICATION_MARKDOWN_FILE,
-} from './constant.js';
+import { CLI_NAME, CLI_VERSION } from './constant.js';
 import { initializeProject, loadConfig } from './config/index.js';
 import { inspectDoctor } from './doctor/index.js';
 import {
@@ -28,10 +17,22 @@ import {
   useModelProfile,
   writeStoredApiKey,
 } from './models/index.js';
-import { writeLine } from './output/index.js';
-import { renderSpecification } from './specification/index.js';
+import { writeError, writeLine } from './output/index.js';
+import {
+  executeApprove,
+  executeResume,
+  executeRun,
+  executeStatus,
+} from './workflow/command-handler.js';
+import { CLI_EXIT_CODES } from './workflow/constant.js';
+import { WorkflowCliError } from './workflow/error.js';
 import type { ModelProfile } from './config/index.js';
-import type { AuthSetCommandOptions, ModelAddCommandOptions, RunCommandOptions } from './types.js';
+import type {
+  ApproveCommandOptions,
+  AuthSetCommandOptions,
+  ModelAddCommandOptions,
+  RunCommandOptions,
+} from './types.js';
 
 export async function main(argv: readonly string[] = process.argv): Promise<number> {
   const program = new Command()
@@ -75,13 +76,53 @@ export async function main(argv: readonly string[] = process.argv): Promise<numb
 
   program
     .command('run')
-    .description('Create a run and generate its initial specification.')
+    .description(
+      'Create a run, generate its specification and technical plan, and stop at approval.',
+    )
     .argument('<goal>', 'development goal')
     .option('--profile <profile>', 'model profile from .bossflow/config.yaml')
     .option('--model <model>', 'override the model identifier for this run')
     .option('--confirm-project', 'accept inferred project verification commands')
+    .option(
+      '--stop-after <stage>',
+      'stop after spec to preserve specification-only execution',
+      parseStopAfter,
+    )
     .action(async (goal: string, options: RunCommandOptions) => {
       await executeRun(process.cwd(), goal, options);
+    });
+
+  program
+    .command('status')
+    .description('Inspect a persisted workflow run.')
+    .argument('<run-id>', 'run identifier')
+    .action(async (runId: string) => {
+      await executeStatus(process.cwd(), runId);
+    });
+
+  program
+    .command('approve')
+    .description('Approve a workflow gate.')
+    .argument('<run-id>', 'run identifier')
+    .requiredOption('--gate <gate>', 'approval gate: plan or review', parseApprovalGate)
+    .option(
+      '--action <action>',
+      'external action to authorize; repeat for multiple actions',
+      collectApprovalAction,
+      [],
+    )
+    .option('--actor <actor>', 'approval actor')
+    .option('--note <note>', 'approval note')
+    .action(async (runId: string, options: ApproveCommandOptions) => {
+      await executeApprove(process.cwd(), runId, options);
+    });
+
+  program
+    .command('resume')
+    .description('Resume a run from its first incomplete stage without bypassing gates.')
+    .argument('<run-id>', 'run identifier')
+    .action(async (runId: string) => {
+      await executeResume(process.cwd(), runId);
     });
 
   registerModelCommands(program);
@@ -93,6 +134,16 @@ export async function main(argv: readonly string[] = process.argv): Promise<numb
   } catch (error: unknown) {
     if (error instanceof CommanderError && error.exitCode === 0) {
       return 0;
+    }
+    if (error instanceof CommanderError) {
+      return CLI_EXIT_CODES.USAGE_ERROR;
+    }
+    if (error instanceof WorkflowCliError) {
+      writeError(error.message);
+      if (error.recovery !== undefined) {
+        writeError(error.recovery);
+      }
+      return error.exitCode;
     }
     throw error;
   }
@@ -228,62 +279,30 @@ function registerAuthCommands(program: Command): void {
     });
 }
 
-async function executeRun(
-  projectRoot: string,
-  goal: string,
-  options: RunCommandOptions,
-): Promise<void> {
-  const config = await loadConfig(projectRoot);
-  const projectContext = await inspectProject(projectRoot, {
-    verification: config.workflow.verification,
-  });
-  if (projectContext.profile.requiresConfirmation && options.confirmProject !== true) {
-    throw new Error(
-      'Project verification requires confirmation:\n' +
-        projectContext.profile.ambiguities.map((ambiguity) => `- ${ambiguity}`).join('\n') +
-        '\nRe-run with --confirm-project or configure workflow.verification.commandOverrides.',
+function parseStopAfter(value: string): 'spec' {
+  if (value === 'spec') {
+    return value;
+  }
+  throw new InvalidArgumentError('--stop-after currently supports only "spec".');
+}
+
+function parseApprovalGate(value: string): 'plan' | 'review' {
+  if (value === 'plan' || value === 'review') {
+    return value;
+  }
+  throw new InvalidArgumentError('Approval gate must be "plan" or "review".');
+}
+
+function collectApprovalAction(
+  value: string,
+  previous: readonly ApprovalAction[],
+): ApprovalAction[] {
+  if (!APPROVAL_ACTIONS.includes(value as ApprovalAction)) {
+    throw new InvalidArgumentError(
+      `Approval action must be one of: ${APPROVAL_ACTIONS.join(', ')}.`,
     );
   }
-  const resolvedRuntime = await resolveModelRuntime({
-    projectRoot,
-    ...(options.profile === undefined ? {} : { profileName: options.profile }),
-    ...(options.model === undefined ? {} : { modelOverride: options.model }),
-  });
-  const runsRoot = path.resolve(projectRoot, config.workflow.runDirectory);
-  const store = new FileRunStore({ runsRoot });
-  const run = await store.create({
-    repositoryPath: projectRoot,
-    goal,
-    modelProfile: resolvedRuntime.profileName,
-    projectProfile: {
-      ...projectContext.profile,
-      confirmedByUser: options.confirmProject === true,
-    },
-    ...(resolvedRuntime.runtime.model === undefined
-      ? {}
-      : { model: resolvedRuntime.runtime.model }),
-  });
-
-  writeLine(`Run created: ${run.id}`);
-  writeLine(`Artifacts: ${path.join(runsRoot, run.id)}`);
-  writeLine(
-    `Model: ${resolvedRuntime.profileName}; credential source: ${resolvedRuntime.credentialSource}.`,
-  );
-  writeLine(
-    `Project: ${projectContext.profile.packageManager}; ` +
-      `Git ${projectContext.profile.git.status}; ` +
-      `${projectContext.profile.verificationCommands.length} verification commands.`,
-  );
-
-  const specification = await generateSpecification(goal, {
-    modelRuntime: resolvedRuntime.runtime,
-  });
-  await store.writeJson(run, SPECIFICATION_JSON_FILE, specification);
-  await store.writeMarkdown(run, SPECIFICATION_MARKDOWN_FILE, renderSpecification(specification));
-
-  writeLine(
-    `Specification created with ${specification.acceptanceCriteria.length} acceptance criteria.`,
-  );
+  return [...previous, value as ApprovalAction];
 }
 
 function parseModelKind(value: string): 'openai' | 'openai-compatible' {

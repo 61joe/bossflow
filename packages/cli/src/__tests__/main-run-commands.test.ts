@@ -1,9 +1,10 @@
+/* eslint-disable max-lines-per-function -- CLI scenarios share setup and cleanup for the same temporary project. */
 import { jest } from '@jest/globals';
 import { mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { main, setAgentOutput } from './cli-test-runtime.js';
+import { main, setAgentOutput, setAgentOutputs } from './cli-test-runtime.js';
 
 const specification = {
   title: 'Export',
@@ -12,6 +13,33 @@ const specification = {
   nonGoals: [],
   acceptanceCriteria: ['File downloads'],
   constraints: [],
+};
+const plan = {
+  schemaVersion: 1,
+  summary: 'Add export support.',
+  affectedPaths: ['src'],
+  tasks: [
+    {
+      id: 'task-1',
+      title: 'Implement export',
+      description: 'Add the export feature.',
+      dependencies: [],
+      affectedPaths: ['src'],
+      acceptanceCriteria: ['File downloads'],
+    },
+  ],
+  interfaceChanges: [],
+  risks: [],
+  verificationCommands: [
+    {
+      id: 'test',
+      label: 'Test',
+      command: 'pnpm',
+      args: ['test'],
+      required: true,
+      timeoutMs: 1_000,
+    },
+  ],
 };
 
 describe('CLI run command', () => {
@@ -27,7 +55,15 @@ describe('CLI run command', () => {
       process.env.OPENAI_API_KEY = 'openai-key';
       await main(['node', 'bossflow', 'init']);
       setAgentOutput(specification);
-      await main(['node', 'bossflow', 'run', 'Add export', '--confirm-project']);
+      await main([
+        'node',
+        'bossflow',
+        'run',
+        'Add export',
+        '--confirm-project',
+        '--stop-after',
+        'spec',
+      ]);
 
       await main([
         'node',
@@ -55,6 +91,8 @@ describe('CLI run command', () => {
         'local',
         '--model',
         'override-model',
+        '--stop-after',
+        'spec',
       ]);
 
       const runIds = await readdir(path.join(projectRoot, '.bossflow', 'runs'));
@@ -109,6 +147,47 @@ describe('CLI run command', () => {
         'Project verification requires confirmation',
       );
       await expect(readdir(path.join(projectRoot, '.bossflow', 'runs'))).rejects.toThrow();
+    } finally {
+      process.chdir(originalCwd);
+      if (originalOpenAiKey === undefined) {
+        delete process.env.OPENAI_API_KEY;
+      } else {
+        process.env.OPENAI_API_KEY = originalOpenAiKey;
+      }
+      stdout.mockRestore();
+      await rm(projectRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('generates a plan and stops at the plan approval gate by default', async () => {
+    const projectRoot = await mkdtemp(path.join(tmpdir(), 'bossflow-main-run-plan-'));
+    const originalCwd = process.cwd();
+    const originalOpenAiKey = process.env.OPENAI_API_KEY;
+    const stdout = jest.spyOn(process.stdout, 'write').mockImplementation(() => true);
+
+    try {
+      process.chdir(projectRoot);
+      process.env.OPENAI_API_KEY = 'openai-key';
+      await main(['node', 'bossflow', 'init']);
+      setAgentOutputs(specification, plan);
+
+      await main(['node', 'bossflow', 'run', 'Add export', '--confirm-project']);
+
+      const [runId] = (await readdir(path.join(projectRoot, '.bossflow', 'runs'))).filter(
+        (entry) => !entry.startsWith('.'),
+      );
+      const runDirectory = path.join(projectRoot, '.bossflow', 'runs', runId as string);
+      const savedRun = JSON.parse(await readFile(path.join(runDirectory, 'run.json'), 'utf8'));
+      expect(savedRun).toMatchObject({ stage: 'plan_approval' });
+      await expect(readFile(path.join(runDirectory, 'plan.json'), 'utf8')).resolves.toContain(
+        'Implement export',
+      );
+      await expect(readFile(path.join(runDirectory, 'plan.md'), 'utf8')).resolves.toContain(
+        '# Technical Plan',
+      );
+      expect(stdout).toHaveBeenCalledWith(
+        `Plan approval required: bossflow approve ${savedRun.id} --gate plan\n`,
+      );
     } finally {
       process.chdir(originalCwd);
       if (originalOpenAiKey === undefined) {

@@ -5,9 +5,14 @@ export const agentConfigs: Record<string, unknown>[] = [];
 export const runnerConfigs: Record<string, unknown>[] = [];
 
 let nextOutput: unknown;
+const queuedOutputs: unknown[] = [];
 
 export function setAgentOutput(output: unknown): void {
   nextOutput = output;
+}
+
+export function setAgentOutputs(...outputs: readonly unknown[]): void {
+  queuedOutputs.splice(0, queuedOutputs.length, ...outputs);
 }
 
 class MockAgent {
@@ -22,7 +27,7 @@ class MockRunner {
   }
 
   async run(): Promise<{ finalOutput: unknown }> {
-    return { finalOutput: nextOutput };
+    return { finalOutput: queuedOutputs.length === 0 ? nextOutput : queuedOutputs.shift() };
   }
 }
 

@@ -3,8 +3,8 @@
 | 项目     | 内容                                      |
 | -------- | ----------------------------------------- |
 | 文档版本 | v0.1                                      |
-| 更新日期 | 2026-10-30                                |
-| 适用范围 | CLI 独立运行时与后续 Coding Agent Adapter |
+| 更新日期 | 2026-11-03                                |
+| 适用范围 | BossFlow 推理型 Agent 与后续 Adapter 扩展 |
 
 ## 1. 设计目标
 
@@ -43,6 +43,18 @@ models:
 
 `openai-compatible` 使用 `strictFeatureValidation`，不会静默忽略 Responses API 专属能力。
 
+### 模型作用边界
+
+BossFlow 将“推理模型”和“Coding Agent 模型”视为两个独立边界：
+
+- 模型档案控制 Product、Tech Lead 和 Reviewer 等推理型 Agent，用于生成 Specification、Technical Plan 和 Review。
+- Build 阶段由 Coding Agent Adapter 执行。当前 Codex Adapter 调用 `codex exec`，使用 Codex CLI 自身配置的模型和认证。
+- `bossflow run --profile` 和 `--model` 不会透传给 Codex CLI。模型档案中的 OpenAI-compatible 模型名和 Endpoint 也不保证能被 Codex CLI 使用。
+- `run.json` 中的 `modelProfile` 和 `model` 记录的是 BossFlow 推理模型，不代表实现阶段实际使用的 Coding Agent 模型。
+
+后续增加其他 Coding Agent 或希望统一配置时，应通过 Adapter 能力声明和独立的
+`workflow.codingAgent` 配置实现，不应直接复用推理模型档案。
+
 ### DeepSeek 兼容策略
 
 DeepSeek 的当前 Chat Completions API 不接受 Agents SDK 默认发送的 `response_format.type = "json_schema"`。因此 `openai-compatible` 档案采用以下兼容策略：
@@ -80,7 +92,7 @@ bossflow model test local
 
 `model test` 会发起一次最小真实调用，验证鉴权、Endpoint、模型名称和结构化输出链路；它会消耗少量模型额度。
 
-### 为单次运行选择模型
+### 为单次运行选择推理模型
 
 ```text
 bossflow run "增加导出功能" --profile local
@@ -88,6 +100,8 @@ bossflow run "增加导出功能" --profile local --model another-model
 ```
 
 Run 的 `run.json` 会记录模型档案和模型标识，便于审计和复盘。
+该选择只覆盖 Specification、Plan、Review 和 Summary 相关的推理 Agent；Build 阶段的模型由
+Coding Agent Adapter 管理。
 
 ## 4. API Key 配置
 

@@ -2,6 +2,9 @@ export type ApprovalGate = 'plan' | 'review' | 'external-action';
 
 export type ApprovalDecision = 'approved' | 'rejected';
 
+/** External Git actions that may be authorized after Review approval. */
+export type ApprovalAction = 'commit' | 'push' | 'merge' | 'pr';
+
 export interface ApprovalRecord {
   readonly id: string;
   readonly gate: ApprovalGate;
@@ -11,6 +14,8 @@ export interface ApprovalRecord {
   readonly workflowRevision: number;
   readonly artifactFileName?: string | undefined;
   readonly artifactSha256?: string | undefined;
+  /** Explicit actions authorized only for an external-action approval. */
+  readonly actions?: readonly ApprovalAction[] | undefined;
   readonly notes?: string | undefined;
 }
 

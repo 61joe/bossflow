@@ -15,8 +15,9 @@ export {
   VerificationResultSchema,
   WorktreeMetadataSchema,
 } from './schema.js';
-export { RUN_ID_PATTERN } from './constant.js';
+export { APPROVAL_ACTIONS, RUN_ID_PATTERN } from './constant.js';
 export type {
+  ApprovalAction,
   ApprovalDecision,
   ApprovalGate,
   ApprovalRecord,

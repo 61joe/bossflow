@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import {
+  APPROVAL_ACTIONS,
   APPROVAL_DECISIONS,
   APPROVAL_GATES,
   ARTIFACT_KINDS,
@@ -31,12 +32,27 @@ export const ApprovalRecordSchema = z
       .string()
       .regex(/^[a-f0-9]{64}$/)
       .optional(),
+    actions: z.array(z.enum(APPROVAL_ACTIONS)).min(1).optional(),
     notes: NonEmptyStringSchema.optional(),
   })
   .strict()
   .superRefine((approval, context) => {
     if (approval.gate === 'external-action') {
+      if (approval.actions === undefined) {
+        context.addIssue({
+          code: 'custom',
+          path: ['actions'],
+          message: 'External-action approvals must include at least one action.',
+        });
+      }
       return;
+    }
+    if (approval.actions !== undefined) {
+      context.addIssue({
+        code: 'custom',
+        path: ['actions'],
+        message: 'Only external-action approvals may include actions.',
+      });
     }
     if (approval.artifactFileName === undefined || approval.artifactSha256 === undefined) {
       context.addIssue({

@@ -13,9 +13,7 @@ describe('CLI configuration commands', () => {
     try {
       await expect(main(['node', 'bossflow', '--version'])).resolves.toBe(0);
       await expect(main(['node', 'bossflow', '--help'])).resolves.toBe(0);
-      await expect(main(['node', 'bossflow', 'unknown-command'])).rejects.toMatchObject({
-        exitCode: 1,
-      });
+      await expect(main(['node', 'bossflow', 'unknown-command'])).resolves.toBe(2);
       process.argv = ['node', 'bossflow', '--version'];
       await expect(main()).resolves.toBe(0);
     } finally {

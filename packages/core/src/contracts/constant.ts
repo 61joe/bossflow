@@ -1,5 +1,6 @@
 export const APPROVAL_GATES = ['plan', 'review', 'external-action'] as const;
 export const APPROVAL_DECISIONS = ['approved', 'rejected'] as const;
+export const APPROVAL_ACTIONS = ['commit', 'push', 'merge', 'pr'] as const;
 export const WORKTREE_STATUSES = ['active', 'cleaned'] as const;
 export const ARTIFACT_KINDS = [
   'request',
