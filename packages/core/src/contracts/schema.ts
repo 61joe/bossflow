@@ -154,7 +154,16 @@ export const RequirementCoverageSchema = z
     status: z.enum(COVERAGE_STATUSES),
     evidence: z.array(NonEmptyStringSchema),
   })
-  .strict();
+  .strict()
+  .superRefine((coverage, context) => {
+    if (coverage.status !== 'missing' && coverage.evidence.length === 0) {
+      context.addIssue({
+        code: 'custom',
+        path: ['evidence'],
+        message: 'Covered and partial requirements must include at least one evidence item.',
+      });
+    }
+  });
 
 export const ImplementationResultSchema = z
   .object({
