@@ -81,6 +81,24 @@ The system SHALL perform implementation and verification in a dedicated Git work
 - **THEN** those changes appear only in the run worktree
 - **AND** the configured main working tree remains unchanged
 
+#### Scenario: Reject a dirty main worktree
+
+- **WHEN** worktree creation uses the default dirty strategy and the main worktree has uncommitted changes
+- **THEN** the system rejects worktree creation
+- **AND** reports that the user must commit or stash before continuing
+
+#### Scenario: Clean up a retained worktree
+
+- **WHEN** the user explicitly requests cleanup
+- **THEN** the system removes the registered worktree and optionally deletes its branch
+- **AND** marks the persisted worktree metadata as cleaned with a cleanup timestamp
+
+#### Scenario: Detect orphaned managed directories
+
+- **WHEN** the managed worktree root contains directories that are not registered Git worktrees
+- **THEN** the system reports those directories as orphans
+- **AND** does not delete them automatically
+
 #### Scenario: Reject out-of-scope paths
 
 - **WHEN** the implementation diff changes a path outside the approved task scope
@@ -137,6 +155,12 @@ The system SHALL persist a final summary and SHALL allow an interrupted run to r
 - **WHEN** the user resumes a non-terminal run
 - **THEN** the system reloads persisted state and continues from the first incomplete stage
 - **AND** completed commands and worktree creation are not duplicated
+
+#### Scenario: Resume completed implementation
+
+- **WHEN** a run already has `implementation.json`
+- **THEN** the system reuses the persisted implementation result
+- **AND** does not invoke the Implementer again
 
 #### Scenario: Preserve terminal failures
 

@@ -82,6 +82,7 @@ describe('FileRunStore', () => {
       });
 
       await store.writeJson(run, 'plan.json', { schemaVersion: 1, tasks: [] });
+      await expect(store.readText(run, 'plan.json')).resolves.toContain('"schemaVersion": 1');
       const transition = await store.transition(run.id, 'plan', '2026-11-02T00:01:00.000Z');
       const persisted = await store.read(run.id);
 

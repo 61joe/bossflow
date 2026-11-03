@@ -345,6 +345,42 @@ type Plan = z.infer<typeof PlanSchema>;
 - ESLint 禁用必须窄到单行或明确区块，并注明原因。禁止无说明地关闭整个文件规则。
 - JSDoc 不重复 TypeScript 已表达的参数和返回类型，重点描述副作用、不变量和失败条件。
 
+### 核心 Type 与 Interface 注释
+
+- 对于代码中的 `type` 或 `interface` 声明，属于核心公共契约、跨模块 API、持久化数据、安全边界、状态机、恢复机制、权限、路径或时间约束时，必须提供类型级注释。
+- 类型级注释说明该类型的职责、生命周期、适用边界和调用方必须遵守的约束，不重复 TypeScript 类型名称。
+- 字段语义不够直观时，应在字段上方添加字段级注释。重点说明单位、默认值、`undefined` 语义、安全影响、幂等性、持久化含义和副作用。
+- 禁止给所有显而易见的字段机械添加注释；例如字段名已清晰表达普通字符串、布尔值或只读数组时，无需仅为“有注释”而重复说明。
+- 使用 TSDoc 风格的 `/** ... */`。简单说明使用单行注释，复杂契约使用多行注释，并按需使用 `@remarks`、`@example` 或 `@throws`。
+- 禁止使用 `@type` 重复 TypeScript 已表达的类型；`readonly`、可选性和联合类型也不需要复制到注释中。
+- 安全敏感或破坏性字段和方法必须明确说明误用后果，例如强制删除未提交修改、读取仓库外文件或泄露敏感内容。
+
+单行字段注释：
+
+```typescript
+export interface WorktreeGitStatus {
+  /** Whether tracked or untracked files differ from the current commit. */
+  readonly isDirty: boolean;
+}
+```
+
+包含不变量和安全边界的多行注释：
+
+```typescript
+export interface WorktreeDiff {
+  /** Changed paths excluded from the patch because their content may contain secrets. */
+  readonly sensitivePaths: readonly string[];
+
+  /**
+   * Unified binary-capable patch for non-sensitive paths.
+   *
+   * @remarks
+   * Patch content may still contain secrets and must be redacted before persistence or logging.
+   */
+  readonly patch: string;
+}
+```
+
 ## 11. Prettier 初始配置
 
 Prettier 是格式问题的唯一决策者：

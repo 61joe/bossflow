@@ -25,13 +25,13 @@
 
 ## 4. Worktree And Implementation
 
-- [ ] 4.1 Implement idempotent Git worktree creation using `simple-git`, including worktree path, branch, and base-commit metadata.
-- [ ] 4.2 Reject or safely handle dirty repositories according to the approved worktree strategy.
-- [ ] 4.3 Connect the Implementer only after a valid plan approval and run all writes inside the run worktree.
-- [ ] 4.4 Compute the implementation diff and validate changed paths against the approved scope.
-- [ ] 4.5 Persist implementation notes and full patch/diff references without copying sensitive files.
-- [ ] 4.6 Add worktree cleanup, retention, and orphan detection behavior with explicit user control.
-- [ ] 4.7 Validate resume behavior so completed worktree creation and implementation effects are not duplicated.
+- [x] 4.1 Implement idempotent Git worktree creation using `simple-git`, including worktree path, branch, and base-commit metadata.
+- [x] 4.2 Reject or safely handle dirty repositories according to the approved worktree strategy.
+- [x] 4.3 Connect the Implementer only after a valid plan approval and run all writes inside the run worktree.
+- [x] 4.4 Compute the implementation diff and validate changed paths against the approved scope.
+- [x] 4.5 Persist implementation notes and full patch/diff references without copying sensitive files.
+- [x] 4.6 Add worktree cleanup, retention, and orphan detection behavior with explicit user control.
+- [x] 4.7 Validate resume behavior so completed worktree creation and implementation effects are not duplicated.
 
 ## 5. Verification, Review, And Summary
 

@@ -33,4 +33,5 @@ export interface RunStore {
   ): Promise<TransitionResult>;
   writeJson(run: WorkflowRun, fileName: string, value: unknown): Promise<string>;
   writeMarkdown(run: WorkflowRun, fileName: string, content: string): Promise<string>;
+  readText(run: WorkflowRun, fileName: string): Promise<string>;
 }
