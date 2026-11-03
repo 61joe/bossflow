@@ -1,5 +1,15 @@
 ## MODIFIED Requirements
 
+### Requirement: Discoverable CLI commands
+
+The system SHALL expose its supported commands through the top-level CLI help and SHALL exit successfully when help or version output is requested.
+
+#### Scenario: Display top-level help
+
+- **WHEN** the user executes `bossflow --help`
+- **THEN** the process exits with code 0
+- **AND** the output lists `doctor`, `init`, `run`, `status`, `approve`, `resume`, `adapter`, `model`, and `auth`
+
 ### Requirement: Generate a specification run
 
 The system SHALL create a persisted run, generate a validated specification, generate a technical plan, and stop at the plan-approval gate by default. The system MUST preserve specification-only execution through an explicit `--stop-after spec` option.
@@ -25,6 +35,22 @@ The system SHALL create a persisted run, generate a validated specification, gen
 - **AND** the error identifies the missing environment variable or the `bossflow auth set` recovery action
 
 ## ADDED Requirements
+
+### Requirement: Install Coding Agent integrations from the CLI
+
+The system SHALL install a supported Coding Agent integration into an explicitly selected or current project without overwriting a conflicting integration by default.
+
+#### Scenario: Install the Codex integration
+
+- **WHEN** the user runs `bossflow adapter install codex`
+- **THEN** the command installs the BossFlow Skill into `.agents/skills/bossflow/SKILL.md`
+- **AND** exits successfully
+
+#### Scenario: Resolve a conflicting Skill
+
+- **WHEN** the target Skill already exists with different content and `--overwrite` is omitted
+- **THEN** the command exits with the adapter-conflict code
+- **AND** preserves the existing file for user review
 
 ### Requirement: Inspect run status
 

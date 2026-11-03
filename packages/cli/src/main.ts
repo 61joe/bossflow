@@ -1,5 +1,6 @@
 import { password } from '@inquirer/prompts';
 import { Command, CommanderError, InvalidArgumentError } from 'commander';
+import { CODEX_ADAPTER_ID } from '@bossflow/adapters';
 import { APPROVAL_ACTIONS, probeModelRuntime } from '@bossflow/core';
 import type { ApprovalAction } from '@bossflow/core';
 
@@ -19,6 +20,7 @@ import {
 } from './models/index.js';
 import { writeError, writeLine } from './output/index.js';
 import {
+  executeAdapterInstall,
   executeApprove,
   executeResume,
   executeRun,
@@ -28,6 +30,7 @@ import { CLI_EXIT_CODES } from './workflow/constant.js';
 import { WorkflowCliError } from './workflow/error.js';
 import type { ModelProfile } from './config/index.js';
 import type {
+  AdapterInstallCommandOptions,
   ApproveCommandOptions,
   AuthSetCommandOptions,
   ModelAddCommandOptions,
@@ -125,6 +128,7 @@ export async function main(argv: readonly string[] = process.argv): Promise<numb
       await executeResume(process.cwd(), runId);
     });
 
+  registerAdapterCommands(program);
   registerModelCommands(program);
   registerAuthCommands(program);
 
@@ -147,6 +151,25 @@ export async function main(argv: readonly string[] = process.argv): Promise<numb
     }
     throw error;
   }
+}
+
+function registerAdapterCommands(program: Command): void {
+  const adapterCommand = program
+    .command('adapter')
+    .description('Install and manage Coding Agent integrations.');
+
+  adapterCommand
+    .command('install')
+    .description('Install a Coding Agent integration into a project.')
+    .argument('<adapter>', 'adapter identifier: codex')
+    .option('--project <path>', 'target project root; defaults to the current directory')
+    .option('--overwrite', 'replace a different existing Codex Skill after confirmation')
+    .action(async (adapterId: string, options: AdapterInstallCommandOptions) => {
+      if (adapterId !== CODEX_ADAPTER_ID) {
+        throw new InvalidArgumentError(`Unsupported Coding Agent adapter "${adapterId}".`);
+      }
+      await executeAdapterInstall(options);
+    });
 }
 
 function registerModelCommands(program: Command): void {

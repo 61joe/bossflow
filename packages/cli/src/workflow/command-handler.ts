@@ -1,17 +1,43 @@
 import { userInfo } from 'node:os';
 import path from 'node:path';
 
+import { installCodexSkill } from '@bossflow/adapters';
 import { FileRunStore, inspectProject } from '@bossflow/core';
 import type { WorkflowRun } from '@bossflow/core';
 
 import { loadConfig } from '../config/index.js';
 import { resolveModelRuntime } from '../models/index.js';
 import { writeLine } from '../output/index.js';
-import type { ApproveCommandOptions, RunCommandOptions } from '../types.js';
+import type {
+  AdapterInstallCommandOptions,
+  ApproveCommandOptions,
+  RunCommandOptions,
+} from '../types.js';
 import { createDefaultCodingAgentRegistry } from './coding-agent-registry.js';
-import { DEFAULT_CODING_AGENT_ID } from './constant.js';
+import { CLI_EXIT_CODES, DEFAULT_CODING_AGENT_ID } from './constant.js';
+import { WorkflowCliError } from './error.js';
 import { renderWorkflowStatus } from './renderer.js';
 import { WorkflowService } from './workflow-service.js';
+
+export async function executeAdapterInstall(options: AdapterInstallCommandOptions): Promise<void> {
+  const projectRoot = path.resolve(options.project ?? process.cwd());
+  const result = await installCodexSkill({
+    projectRoot,
+    ...(options.overwrite === true ? { overwrite: true } : {}),
+  });
+  if (result.status === 'conflict') {
+    throw new WorkflowCliError(
+      `A different Codex Skill already exists at "${result.skillPath}".`,
+      CLI_EXIT_CODES.ADAPTER_CONFLICT,
+      'Review the existing Skill, then re-run with --overwrite only if replacement is intended.',
+    );
+  }
+  writeLine(
+    result.status === 'already-installed'
+      ? `Codex Skill is already installed: ${result.skillPath}`
+      : `Installed Codex Skill: ${result.skillPath}`,
+  );
+}
 
 export async function executeRun(
   projectRoot: string,

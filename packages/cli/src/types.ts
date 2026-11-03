@@ -12,6 +12,11 @@ export interface ApproveCommandOptions {
   readonly note?: string;
 }
 
+export interface AdapterInstallCommandOptions {
+  readonly project?: string;
+  readonly overwrite?: boolean;
+}
+
 export interface ModelAddCommandOptions {
   readonly kind: string;
   readonly model?: string;

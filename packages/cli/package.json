@@ -22,6 +22,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@bossflow/adapters": "workspace:*",
     "@bossflow/core": "workspace:*",
     "@inquirer/prompts": "^8.7.5",
     "commander": "^15.0.0",

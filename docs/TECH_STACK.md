@@ -138,22 +138,24 @@ BOSSFLOW_LOG_LEVEL=info
 ## 5. 依赖边界
 
 ```text
-Codex Skill / CLI / Future Adapters
-                 ↓
-          Workflow Core
-     ┌───────────┼────────────┐
-     ↓           ↓            ↓
- Agents SDK   Tool Adapters  Run Store
-     ↓           ↓            ↓
-  OpenAI API  Git/Shell/Files  JSON/MD/YAML
+Codex Skill / CLI ───────→ Adapters
+          │                    │
+          └──────────┬─────────┘
+                     ↓
+              Workflow Core
+        ┌────────────┼────────────┐
+        ↓            ↓            ↓
+   Agents SDK   Tool Adapters  Run Store
+        ↓            ↓            ↓
+    OpenAI API  Git/Shell/Files  JSON/MD/YAML
 ```
 
 - `core/agents`：允许依赖 `@openai/agents` 和 Zod。
 - `core/workflow`：负责阶段、审批、重试和恢复，不直接依赖具体 CLI。
 - `core/tools`：封装 `execa`、`simple-git` 和文件扫描。
 - `core/run-store`：保存 JSON、Markdown 和 YAML，不依赖 Agents SDK。
-- `cli`：负责参数、交互、`dotenv` 和终端输出。
-- `adapters`：负责不同 Coding Agent 的启动方式、上下文转换和结果回收。
+- `cli`：负责参数、交互、`dotenv`、终端输出和 Adapter 组合；可以直接组合 Adapter，但不得把具体 Adapter 行为下沉到 Core。
+- `adapters`：负责不同 Coding Agent 的启动方式、上下文转换、Skill 安装和结果回收；不得反向依赖 CLI。
 
 ## 6. 暂缓引入
 

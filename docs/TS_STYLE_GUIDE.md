@@ -219,8 +219,8 @@ export const DEFAULT_TIMEOUT_MS = 30_000;
 依赖方向保持单向：
 
 ```text
-adapters ──→ core
-cli      ──→ core
+cli ──→ adapters ──→ core
+ └──────────────────→ core
 core     ──→ 不反向依赖 cli 或 adapters
 ```
 

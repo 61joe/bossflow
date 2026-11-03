@@ -56,11 +56,11 @@
 
 ## 7. Codex Adapter
 
-- [ ] 7.1 Add an installer that copies the BossFlow Codex Skill into the supported target-project Skill location without overwriting unrelated Skills.
-- [ ] 7.2 Update the Skill to create or resume persisted runs using the current CLI contract.
-- [ ] 7.3 Require the Skill to inspect `run.json` approvals before implementation or external Git actions.
-- [ ] 7.4 Require the Skill to report the actual stage, pending action, and incomplete evidence instead of claiming later stages are complete.
-- [ ] 7.5 Add adapter tests for installation idempotency, collision handling, and unsafe path rejection.
+- [x] 7.1 Add an installer that copies the BossFlow Codex Skill into the supported target-project Skill location without overwriting unrelated Skills.
+- [x] 7.2 Update the Skill to create or resume persisted runs using the current CLI contract.
+- [x] 7.3 Require the Skill to inspect `run.json` approvals before implementation or external Git actions.
+- [x] 7.4 Require the Skill to report the actual stage, pending action, and incomplete evidence instead of claiming later stages are complete.
+- [x] 7.5 Add adapter tests for installation idempotency, collision handling, and unsafe path rejection.
 
 ## 8. Verification And Rollout
 

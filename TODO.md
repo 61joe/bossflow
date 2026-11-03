@@ -34,3 +34,7 @@
 
 - [ ] Add language-specific default verification commands for Rust, Go, Python, Java, Ruby and PHP projects.
 - [ ] Make source scanning honor repository ignore rules and large-monorepo path filters.
+
+## Codex Adapter Installer
+
+- [ ] Add a cross-process file lock for concurrent Codex Skill installs and verify deterministic conflict or idempotent behavior under parallel execution.
