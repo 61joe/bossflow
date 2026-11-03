@@ -64,12 +64,12 @@
 
 ## 8. Verification And Rollout
 
-- [ ] 8.1 Create fixture repositories for clean, dirty, multi-package, missing-command, and failing-verification scenarios.
-- [ ] 8.2 Add fake model/tool implementations so workflow tests require no network or paid model calls.
-- [ ] 8.3 Add unit tests for schemas, gates, transitions, path-scope validation, redaction, and resume idempotency.
-- [ ] 8.4 Add integration tests covering Spec → Plan → approval → worktree → Verify → Review → Summary.
-- [ ] 8.5 Add failure tests for malformed plans, command failures, review blockers, interrupted runs, and stale approvals.
-- [ ] 8.6 Verify that main worktree files and Git metadata remain unchanged until the explicitly approved external action.
-- [ ] 8.7 Run one real-model smoke workflow against a disposable fixture repository.
-- [ ] 8.8 Update PRD acceptance status, technical documentation, and OpenSpec behavioral specs.
-- [ ] 8.9 Run `pnpm check` and `pnpm spec:validate`.
+- [x] 8.1 Create fixture repositories for clean, dirty, multi-package, missing-command, and failing-verification scenarios.
+- [x] 8.2 Add fake model/tool implementations so workflow tests require no network or paid model calls.
+- [x] 8.3 Add unit tests for schemas, gates, transitions, path-scope validation, redaction, and resume idempotency.
+- [x] 8.4 Add integration tests covering Spec → Plan → approval → worktree → Verify → Review → Summary.
+- [x] 8.5 Add failure tests for malformed plans, command failures, review blockers, interrupted runs, and stale approvals.
+- [x] 8.6 Verify that main worktree files and Git metadata remain unchanged until the explicitly approved external action.
+- [x] 8.7 Run one real-model smoke workflow against a disposable fixture repository.
+- [x] 8.8 Update PRD acceptance status, technical documentation, and OpenSpec behavioral specs.
+- [x] 8.9 Run `pnpm check` and `pnpm spec:validate`.

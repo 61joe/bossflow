@@ -65,6 +65,9 @@ DeepSeek 的当前 Chat Completions API 不接受 Agents SDK 默认发送的 `re
 4. 默认关闭 OpenAI Trace Exporter，避免非 OpenAI Provider 要求额外的 `OPENAI_API_KEY`。
 
 2026-10-30 已使用 `deepseek-flash`、`https://api.deepseek.com` 完成最小探针和完整规格生成验证。
+2026-11-03 又通过 `pnpm smoke:model` 完成 Specification、Technical Plan、Build、Verify、
+Review 和 Summary 的真实模型 smoke，最终阶段为 `completed`，4 个验证命令通过，Review
+findings 为 0。smoke 使用隔离临时仓库和 fake Coding Agent，结束后自动清理。
 
 ## 3. CLI 配置
 

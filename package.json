@@ -11,13 +11,14 @@
     "build": "pnpm -r --if-present build",
     "changeset": "changeset",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
-    "dev": "pnpm build && pnpm --filter @bossflow/cli exec tsx src/bin.ts",
+    "dev": "node scripts/dev.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "guard:branch": "node scripts/guard-branch.mjs",
     "guard:push": "node scripts/guard-push.mjs",
     "lint": "eslint .",
     "lint:staged": "lint-staged",
+    "smoke:model": "node scripts/smoke-model-workflow.mjs",
     "spec:list": "OPENSPEC_TELEMETRY=0 openspec list",
     "spec:validate": "OPENSPEC_TELEMETRY=0 openspec validate --all --strict --no-interactive",
     "version-packages": "changeset version && pnpm install --lockfile-only",
@@ -41,7 +42,6 @@
     "lint-staged": "^17.6.0",
     "prettier": "^3.9.10",
     "ts-jest": "^29.4.15",
-    "tsx": "^4.23.15",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.72.1"
   }

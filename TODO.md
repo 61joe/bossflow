@@ -38,3 +38,7 @@
 ## Codex Adapter Installer
 
 - [ ] Add a cross-process file lock for concurrent Codex Skill installs and verify deterministic conflict or idempotent behavior under parallel execution.
+
+## Workflow Verification
+
+- [ ] Decide whether approved technical-plan verification recommendations should remain advisory or be explicitly merged into the persisted project verification profile.

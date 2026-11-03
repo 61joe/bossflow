@@ -20,11 +20,12 @@ export default {
   moduleNameMapper: {
     '^@bossflow/core$': '<rootDir>/packages/core/src/index.ts',
     '^@bossflow/adapters$': '<rootDir>/packages/adapters/src/index.ts',
+    '^@bossflow/cli$': '<rootDir>/packages/cli/src/index.ts',
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
-  roots: ['<rootDir>/packages'],
+  roots: ['<rootDir>/packages', '<rootDir>/tests'],
   testEnvironment: 'node',
-  testMatch: ['**/__tests__/**/*.test.ts'],
+  testMatch: ['**/__tests__/**/*.test.ts', '**/tests/integration/**/*.test.ts'],
   testTimeout: 10000,
   transform: {
     '^.+\\.tsx?$': [
