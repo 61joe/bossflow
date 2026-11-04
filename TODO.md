@@ -2,24 +2,24 @@
 
 ## GitHub Release Automation
 
-- [ ] Create a GitHub fine-grained personal access token scoped only to `61joe/bossflow`.
-- [ ] Grant the token `Contents: Read and write` and `Pull requests: Read and write`.
-- [ ] Add the token as the repository secret `RELEASE_PR_TOKEN` without posting it in chat:
+- [x] Create a GitHub fine-grained personal access token scoped only to `61joe/bossflow`.
+- [x] Grant the token `Contents: Read and write` and `Pull requests: Read and write`.
+- [x] Add the token as the repository secret `RELEASE_PR_TOKEN` without posting it in chat:
 
   ```text
   gh secret set RELEASE_PR_TOKEN --repo 61joe/bossflow
   ```
 
-- [ ] Add a temporary Changeset in a `chore/` PR and merge it to main.
-- [ ] Manually trigger the Release PR workflow from `main`:
+- [x] Add a temporary Changeset in a `chore/` PR and merge it to main.
+- [x] Manually trigger the Release PR workflow from `main`:
 
   ```text
   gh workflow run release-pr.yml --repo 61joe/bossflow --ref main
   ```
 
-- [ ] Verify the manually triggered Release PR workflow creates or updates the `chore/release` PR.
-- [ ] Verify `Branch name policy` and CI run automatically without closing or reopening the release PR.
-- [ ] Verify the release PR creates a GitHub Release when merged.
+- [x] Verify the manually triggered Release PR workflow creates or updates the `chore/release` PR.
+- [x] Verify `Branch name policy` and CI run automatically without closing or reopening the release PR.
+- [x] Verify the release PR creates a GitHub Release when merged.
 
 ## npm Registry
 
@@ -38,7 +38,3 @@
 ## Codex Adapter Installer
 
 - [ ] Add a cross-process file lock for concurrent Codex Skill installs and verify deterministic conflict or idempotent behavior under parallel execution.
-
-## Workflow Verification
-
-- [ ] Decide whether approved technical-plan verification recommendations should remain advisory or be explicitly merged into the persisted project verification profile.

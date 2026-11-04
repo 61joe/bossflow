@@ -7,7 +7,12 @@ export {
 } from './constant.js';
 export { renderReview, renderSummary } from './renderer.js';
 export { ReviewCoordinator } from './review-coordinator.js';
+export {
+  deriveReviewerVerificationContext,
+  enforceVerificationAuthority,
+} from './verification-authority.js';
 export type {
+  DeriveReviewerVerificationContextOptions,
   ReviewCoordinatorOptions,
   ReviewExecutor,
   ReviewOutcome,

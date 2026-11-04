@@ -182,6 +182,7 @@ describe('specialist agent contracts', () => {
           title: 'Missing guard',
           description: 'A path guard is missing.',
           status: 'open',
+          verificationCommandId: 'lint',
         },
       ],
       requirementCoverage: [
@@ -196,6 +197,7 @@ describe('specialist agent contracts', () => {
     };
 
     expect(ReviewResultSchema.parse(review)).toMatchObject({
+      findings: [expect.objectContaining({ verificationCommandId: 'lint' })],
       unresolvedFindingIds: ['finding-1'],
     });
     expect(() =>

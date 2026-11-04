@@ -1,7 +1,7 @@
 import type { Agent, AgentOutputType, UnknownContext } from '@openai/agents';
 import type { z } from 'zod';
 
-import type { TechnicalPlan, VerificationResult } from '../contracts/index.js';
+import type { TechnicalPlan, VerificationCommand, VerificationResult } from '../contracts/index.js';
 import type { ModelRuntime } from '../models/index.js';
 
 export interface DevelopmentSpecification {
@@ -40,11 +40,27 @@ export interface ImplementationAgentInput {
   readonly repositoryContext: string;
 }
 
+/**
+ * Distinguishes commands authorized by the persisted project profile from advisory plan checks.
+ *
+ * @remarks
+ * Reviewer findings may block on missing required authoritative commands. Advisory plan commands
+ * were not selected for execution and must not become blocking solely because evidence is absent.
+ */
+export interface ReviewerVerificationContext {
+  readonly authoritativeCommands: readonly VerificationCommand[];
+  readonly executedCommandIds: readonly string[];
+  readonly advisoryPlanCommands: readonly VerificationCommand[];
+  readonly missingRequiredCommandIds: readonly string[];
+}
+
 export interface ReviewerAgentInput {
   readonly specification: DevelopmentSpecification;
   readonly plan: TechnicalPlan;
   readonly diff: string;
   readonly verificationEvidence: readonly VerificationResult[];
+  /** Optional for backward-compatible direct Agent callers; the workflow Coordinator always sets it. */
+  readonly verificationContext?: ReviewerVerificationContext;
 }
 
 export type GenerateTechnicalPlanOptions = AgentBaseOptions;

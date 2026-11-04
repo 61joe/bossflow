@@ -24,6 +24,10 @@ import {
 } from './constant.js';
 import { renderReview, renderSummary } from './renderer.js';
 import type { ReviewCoordinatorOptions, ReviewOutcome, ReviewWorkflowOptions } from './types.js';
+import {
+  deriveReviewerVerificationContext,
+  enforceVerificationAuthority,
+} from './verification-authority.js';
 
 export class ReviewCoordinator {
   readonly #store;
@@ -48,6 +52,13 @@ export class ReviewCoordinator {
     const specification = await this.#loadSpecification(run);
     const plan = await this.#loadApprovedPlan(run);
     const verification = await this.#loadVerification(run);
+    const verificationContext = deriveReviewerVerificationContext({
+      authoritativeCommands:
+        run.projectProfile?.verificationCommands ??
+        verification.records.map((record) => record.command),
+      planCommands: plan.verificationCommands,
+      verificationRecords: verification.records,
+    });
     const diff = createReviewDiffSummary(
       await this.#loadArtifactText(run, IMPLEMENTATION_PATCH_FILE, false),
     );
@@ -56,9 +67,15 @@ export class ReviewCoordinator {
       plan,
       diff,
       verificationEvidence: verification.records.map((record) => record.result),
+      verificationContext,
     };
     const review = ReviewResultSchema.parse(
-      redactUnknown(enforceCoverage(await this.#reviewer(input), specification)),
+      redactUnknown(
+        enforceVerificationAuthority(
+          enforceCoverage(await this.#reviewer(input), specification),
+          verificationContext,
+        ),
+      ),
     );
     const blocked = hasBlockingReviewFindings(review);
     const summary = RunSummarySchema.parse(

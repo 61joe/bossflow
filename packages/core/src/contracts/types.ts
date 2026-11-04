@@ -87,6 +87,13 @@ export interface TechnicalPlan {
   readonly tasks: readonly PlanTask[];
   readonly interfaceChanges: readonly InterfaceChange[];
   readonly risks: readonly PlanRisk[];
+  /**
+   * Advisory checks proposed by planning.
+   *
+   * @remarks
+   * Execution uses the persisted project-profile verification commands. Plan commands do not grant
+   * additional execution permission.
+   */
   readonly verificationCommands: readonly VerificationCommand[];
 }
 
@@ -110,6 +117,8 @@ export interface ReviewFinding {
   readonly status: 'open' | 'resolved' | 'waived';
   readonly file?: string | undefined;
   readonly line?: number | undefined;
+  /** Verification command associated with this finding, when the finding is command-specific. */
+  readonly verificationCommandId?: string | undefined;
 }
 
 export interface RequirementCoverage {

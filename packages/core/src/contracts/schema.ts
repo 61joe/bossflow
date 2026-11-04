@@ -160,6 +160,7 @@ export const ReviewFindingSchema = z
     status: z.enum(REVIEW_STATUSES),
     file: NonEmptyStringSchema.optional(),
     line: z.number().int().positive().optional(),
+    verificationCommandId: NonEmptyStringSchema.optional(),
   })
   .strict();
 

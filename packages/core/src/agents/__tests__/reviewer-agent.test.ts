@@ -55,6 +55,13 @@ describe('reviewer agent', () => {
 
     await expect(generateReviewResult(REVIEWER_INPUT)).resolves.toEqual(reviewResult);
     expect(runtimeMock.runCalls[0]?.input).toContain('93 tests passed');
+    expect(runtimeMock.runCalls[0]?.input).toContain('"advisoryPlanCommands":[]');
+    expect(runtimeMock.agentConfigs[0]?.instructions).toContain(
+      'Treat advisoryPlanCommands as optional recommendations',
+    );
+    expect(runtimeMock.agentConfigs[0]?.instructions).toContain(
+      'do not duplicate the same missing-evidence finding',
+    );
   });
 
   it('supports compatible-provider JSON output', async () => {
@@ -66,6 +73,10 @@ describe('reviewer agent', () => {
       }),
     ).resolves.toEqual(reviewResult);
     expect(runtimeMock.agentConfigs[0]).not.toHaveProperty('outputType');
+    expect(runtimeMock.agentConfigs[0]?.instructions).toContain(
+      'Every evidence field MUST be a JSON array of strings',
+    );
+    expect(runtimeMock.agentConfigs[0]?.instructions).toContain('verificationCommandId');
   });
 
   it('rejects unredacted verification evidence before model execution', async () => {

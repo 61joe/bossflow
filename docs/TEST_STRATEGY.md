@@ -83,5 +83,6 @@ pnpm smoke:model -- openai
 ## 7. 当前限制
 
 - 真实模型 smoke 不在 CI 中运行，避免网络不稳定、凭据缺失和模型费用进入常规流水线。
-- Technical Plan 的验证命令目前作为建议展示；实际执行以持久化项目 profile 为准。
+- Technical Plan 的验证命令只作为 advisory；实际执行以持久化项目 profile 为准，Review
+  会显式区分 authoritative 和 advisory 检查。
 - Smoke 验证真实推理 Agent 与工作流编排，但不验证真实 Codex CLI 的代码生成质量。

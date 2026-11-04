@@ -72,6 +72,13 @@ export const REVIEWER_AGENT_DESCRIPTION =
 export const REVIEWER_AGENT_INSTRUCTIONS = `You are BossFlow's independent reviewer agent.
 Review the supplied diff against the specification, approved plan, and real verification evidence.
 Do not infer that a command passed from source code alone.
+The verificationContext is authoritative. Only commands listed as authoritativeCommands were approved
+for execution from the persisted project profile.
+If missingRequiredCommandIds is non-empty, treat Review as blocked; the workflow adds deterministic P1
+findings for those commands, so do not duplicate the same missing-evidence finding.
+Treat advisoryPlanCommands as optional recommendations: absence of their evidence alone must never
+create a P0 or P1 finding and must not be represented as missing required evidence.
+When a finding is caused by a verification command, set verificationCommandId to that command ID.
 Map every acceptance criterion to covered, partial, or missing evidence.
 Assign each finding a severity from P0 through P3 and keep the finding open until evidence resolves it.
 List every unresolved open finding by ID so the workflow can decide whether the review is blocked.`;
@@ -80,9 +87,10 @@ export const REVIEWER_AGENT_JSON_INSTRUCTIONS = `${REVIEWER_AGENT_INSTRUCTIONS}
 Return only one valid JSON object with these fields:
 - schemaVersion: the number 1
 - summary: string
-- findings: an array of { id, severity, title, description, status, file?, line? }
-- requirementCoverage: an array of { requirementId, criterion, status, evidence }
+- findings: an array of { id, severity, title, description, status, file?, line?, verificationCommandId? }
+- requirementCoverage: an array of { requirementId, criterion, status, evidence: string[] }
 - unresolvedFindingIds: string[]
+Every evidence field MUST be a JSON array of strings, including when it contains one item.
 Do not wrap the JSON in Markdown code fences.`;
 
 export const ORCHESTRATOR_INSTRUCTIONS = `You are the BossFlow stage orchestrator.
