@@ -86,3 +86,47 @@ pnpm smoke:model -- openai
 - Technical Plan 的验证命令只作为 advisory；实际执行以持久化项目 profile 为准，Review
   会显式区分 authoritative 和 advisory 检查。
 - Smoke 验证真实推理 Agent 与工作流编排，但不验证真实 Codex CLI 的代码生成质量。
+
+## 8. 真实 Codex Conformance
+
+`smoke:model` 使用 fake Coding Agent；真实 Codex 验收必须使用：
+
+```text
+pnpm build
+codex login
+pnpm conformance:codex -- --scenario single-js-export
+pnpm conformance:codex -- --scenario single-js-function
+pnpm conformance:codex -- --scenario multi-package-js-export
+```
+
+可用选项：
+
+- `--profile <name>`：为 Specification、Plan 和 Review 指定 BossFlow 模型档案。
+- `--output-dir <path>`：报告目录，默认 `docs/conformance/evidence`。
+- `--keep-on-failure`：失败时保留一次性仓库，但在保留前删除凭据副本。
+
+每个场景创建真实 Git 仓库，通过正常 `run → approve → resume` 流程调用真实 `codex`，
+执行项目验证命令并生成脱敏 JSON 报告。报告只包含阶段、状态、路径、命令状态、finding 摘要、
+审批摘要和 artifact SHA-256，不包含 Prompt、环境变量转储、凭据、原始 stdout/stderr 或完整 Patch。
+
+检查和清理：
+
+1. 打开报告，确认 `stage`、`outcome` 和 `firstIncompleteStage`。
+2. 将报告与对应的 `.bossflow/runs/<run-id>/run.json` 对照。
+3. 仅将人工复核后的脱敏摘要提交到 `docs/conformance/`。
+4. 成功运行的临时仓库会自动删除。
+5. 失败时默认自动删除；使用 `--keep-on-failure` 时，凭据副本仍会删除，只保留调试现场。
+
+### Codex Desktop 手动检查清单
+
+以下检查不依赖完整聊天记录，只使用用户可见状态和 Run artifacts：
+
+- [ ] 在目标项目执行 `bossflow adapter install codex`。
+- [ ] 在 Codex Desktop 新聊天中可通过 `$bossflow` 唤起。
+- [ ] `bossflow status <run-id>` 与 Skill 汇报的实际阶段一致。
+- [ ] Plan approval 前不创建实现 Worktree，也不修改业务文件。
+- [ ] `bossflow approve <run-id> --gate plan` 后才能继续 Build。
+- [ ] Verify 失败或 Review 存在未解决 P0/P1 时，Skill 不报告完成。
+- [ ] `bossflow resume <run-id>` 能从首个未完成阶段恢复，不重复已完成的副作用。
+- [ ] 未授权时 Skill 不执行 commit、push、merge 或 PR。
+- [ ] 最终 `stage=completed` 前，Skill 不声称工作流完成。

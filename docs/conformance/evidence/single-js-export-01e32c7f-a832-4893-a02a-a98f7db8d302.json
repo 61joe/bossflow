@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "adapterId": "codex",
+  "scenarioId": "single-js-export",
+  "projectProfile": {
+    "id": "single-package-javascript",
+    "packageManager": "pnpm",
+    "languages": ["JavaScript"]
+  },
+  "runId": "01e32c7f-a832-4893-a02a-a98f7db8d302",
+  "stage": "completed",
+  "outcome": "completed",
+  "changedPaths": ["src/index.js"],
+  "verification": [
+    {
+      "commandId": "lint",
+      "status": "passed",
+      "exitCode": 0
+    },
+    {
+      "commandId": "typecheck",
+      "status": "passed",
+      "exitCode": 0
+    },
+    {
+      "commandId": "test",
+      "status": "passed",
+      "exitCode": 0
+    },
+    {
+      "commandId": "build",
+      "status": "passed",
+      "exitCode": 0
+    }
+  ],
+  "reviewFindings": [],
+  "userInterventions": ["plan:approved by conformance", "review:approved by conformance"],
+  "authorizedExternalActions": [],
+  "artifactHashes": {
+    "request.md": "61e32fac36dee87dfde88037d7be93dca0776102c3570d8765298635b4e69082",
+    "spec.json": "0c4e0604e1f7ac61b4c9057c73d0337832a5633b2041544b216c4e781dbf6f8d",
+    "spec.md": "6e00e61533ccb7836c537cacd84eeefbd7200e29bfda5ba3d3231731e8592bb1",
+    "plan.json": "6bf9989ce00fc8279e6722c72557dcb2c1606b5f2322ed7420d110b9beb27a89",
+    "plan.md": "b4ea22a9af0a828e59ba5d6b6071da48c3302d730b6f1c39014b94289c04459f",
+    "implementation.patch": "d7ec9e7227b975a1a82200f68efa654693ec61deb04a810a7c65f4c141c71519",
+    "implementation.json": "f804c76729be3e03f4a5abc48f131afb06d657bc14088dbd6919a97ad0ff8a9a",
+    "verification.md": "3ead3fed59b85f5fcb0ee2289a400224df05faf1d7f1a00f18aff9392b4f3bbf",
+    "verification.json": "47720142006cda5fcd51c69bd7e197431f4c5b85ef2e7f4b818f5473343d9643",
+    "review.md": "7ecda85dff9b447f784c782a130cbaa3174b02c835e2964d25d0832a4e6a2384",
+    "review.json": "f1c6507d8636f280380719170ebc3bd96ebff425a70e12da7ee53bd83981e091",
+    "summary.md": "6ec4950ef4a3649a53401dc50056a22228f1beba7c2b9968c627f14178ad6c60",
+    "summary.json": "d5d1d6868e4f7a11ec501c29893090602998c6363e6fa636669f7998f19e4d22"
+  },
+  "startedAt": "2026-11-04T09:53:04.886Z",
+  "endedAt": "2026-11-04T09:54:54.109Z"
+}

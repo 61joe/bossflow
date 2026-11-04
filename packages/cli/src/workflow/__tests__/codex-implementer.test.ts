@@ -36,7 +36,7 @@ describe('CodexWorktreeImplementer', () => {
     expect(execaMock).toHaveBeenCalledWith(
       'codex',
       expect.arrayContaining(['exec', '--ephemeral', '--sandbox', 'workspace-write']),
-      expect.objectContaining({ cwd: '/tmp/worktree' }),
+      expect.objectContaining({ cwd: '/tmp/worktree', stdin: 'ignore' }),
     );
   });
 
