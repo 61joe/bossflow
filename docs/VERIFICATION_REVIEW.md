@@ -36,6 +36,19 @@ verification.md
 
 Reviewer 接收已校验的 Specification、当前审批 Plan、有界 Diff 摘要和真实验证证据。
 完整 patch 保留在 `implementation.patch`，模型上下文默认最多接收 64 KiB 的 Diff 摘要。
+验证命令的唯一执行来源是 `run.json.projectProfile.verificationCommands`。Technical Plan
+中的验证命令仅作为 advisory recommendations，不会隐式扩大执行权限。
+
+Reviewer 还会收到明确的 verification context：
+
+- `authoritativeCommands`：项目 profile 中确认的命令。
+- `executedCommandIds`：实际产生验证结果的命令 ID。
+- `advisoryPlanCommands`：Plan 建议但未被项目 profile 选中的检查。
+- `missingRequiredCommandIds`：缺少真实证据的 authoritative required 命令。
+
+缺少 required 证据时系统自动增加 P1 finding；Reviewer 的命令相关 finding 必须关联
+`verificationCommandId`。系统会把关联 advisory 命令的 P0/P1 确定性降级为 P3，因此
+advisory 未执行不能单独阻断流程。
 Review 结果包含：
 
 - P0–P3 findings。

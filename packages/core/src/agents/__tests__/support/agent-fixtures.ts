@@ -90,6 +90,12 @@ export const REVIEWER_INPUT: ReviewerAgentInput = {
       redacted: true,
     },
   ],
+  verificationContext: {
+    authoritativeCommands: TECHNICAL_PLAN.verificationCommands,
+    executedCommandIds: ['test'],
+    advisoryPlanCommands: [],
+    missingRequiredCommandIds: [],
+  },
 };
 
 export function createRuntime(structuredOutputMode: StructuredOutputMode = 'native'): ModelRuntime {

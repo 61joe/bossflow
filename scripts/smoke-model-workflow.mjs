@@ -31,9 +31,11 @@ try {
     [
       'run',
       "Add `export const bossflowSmoke = 'ok';` to src/index.js. Do not modify any other file " +
-        'or change package scripts. Keep the change limited to src/index.js. Use only the ' +
-        'repository-provided lint, typecheck, test, and build commands as verification; do not ' +
-        'propose extra verification commands.',
+        'or change package scripts. Keep the change limited to src/index.js. Use the ' +
+        'repository-provided lint, typecheck, test, and build commands as required verification, ' +
+        'and include exactly one additional command only as an advisory plan recommendation. ' +
+        'The specification must contain exactly one acceptance criterion: importing src/index.js ' +
+        "exposes bossflowSmoke equal to 'ok'.",
       '--profile',
       profileName,
     ],
@@ -51,12 +53,34 @@ try {
   const verification = JSON.parse(
     await readFile(path.join(runDirectory, 'verification.json'), 'utf8'),
   );
+  const plan = JSON.parse(await readFile(path.join(runDirectory, 'plan.json'), 'utf8'));
   const review = JSON.parse(await readFile(path.join(runDirectory, 'review.json'), 'utf8'));
   if (run.stage !== 'completed') {
     throw new Error(`Expected completed stage, received "${run.stage}".`);
   }
   if (verification.status !== 'passed') {
     throw new Error(`Expected passed verification, received "${verification.status}".`);
+  }
+  const authoritativeCommands = run.projectProfile?.verificationCommands ?? [];
+  const advisoryPlanCommands = plan.verificationCommands.filter(
+    (plannedCommand) =>
+      !authoritativeCommands.some((command) => commandsMatch(command, plannedCommand)),
+  );
+  if (advisoryPlanCommands.length === 0) {
+    throw new Error('Expected at least one advisory command in the technical plan.');
+  }
+  if (verification.records.length !== authoritativeCommands.length) {
+    throw new Error(
+      `Expected ${authoritativeCommands.length} authoritative verification records, ` +
+        `received ${verification.records.length}.`,
+    );
+  }
+  const blockingFindings = review.findings.filter(
+    (finding) =>
+      (finding.severity === 'P0' || finding.severity === 'P1') && finding.status === 'open',
+  );
+  if (blockingFindings.length > 0) {
+    throw new Error('Advisory plan commands produced blocking Review findings.');
   }
 
   process.stdout.write(
@@ -66,6 +90,7 @@ try {
       `Run: ${runId}`,
       `Stage: ${run.stage}`,
       `Verification commands: ${verification.records.length}`,
+      `Advisory plan commands: ${advisoryPlanCommands.length}`,
       `Review findings: ${review.findings.length}`,
       `Final CLI: ${completed.stdout.trim().split('\n').at(-1) ?? 'Workflow completed.'}`,
     ].join('\n') + '\n',
@@ -109,7 +134,8 @@ async function createFixtureRepository(root) {
       "import { bossflowSmoke } from '../src/index.js';\n\n" +
       "if (bossflowSmoke !== 'ok') {\n" +
       '  throw new Error(`Unexpected bossflowSmoke value: ${String(bossflowSmoke)}`);\n' +
-      '}\n',
+      '}\n\n' +
+      'process.stdout.write(`bossflowSmoke=${bossflowSmoke}\\n`);\n',
     'src/index.js': 'export const fixture = true;\n',
   };
   for (const [fileName, content] of Object.entries(files)) {
@@ -186,4 +212,14 @@ async function runCommand(command, args, cwd, environment = process.env) {
 
 function isMissingFileError(error) {
   return typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT';
+}
+
+function commandsMatch(left, right) {
+  return (
+    left.id === right.id &&
+    left.command === right.command &&
+    left.args.length === right.args.length &&
+    left.args.every((argument, index) => argument === right.args[index]) &&
+    (left.cwd ?? '') === (right.cwd ?? '')
+  );
 }

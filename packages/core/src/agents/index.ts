@@ -32,6 +32,7 @@ export type {
   ModelProbeResult,
   PreparedAgentExecution,
   ReviewerAgentInput,
+  ReviewerVerificationContext,
   SpecialistCapabilityDetector,
   SpecialistRole,
   StructuredAgentExecutorOptions,

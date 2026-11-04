@@ -1,4 +1,4 @@
-/* eslint-disable max-lines -- Review scenarios share a single artifact fixture and are easier to audit together. */
+/* eslint-disable max-lines, complexity -- Review scenarios share one artifact fixture with many optional branches. */
 import { jest } from '@jest/globals';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -8,9 +8,11 @@ import type {
   ApprovalRecord,
   ReviewResult,
   TechnicalPlan,
+  VerificationCommand,
   VerificationResult,
 } from '../../contracts/index.js';
-import type { DevelopmentSpecification } from '../../agents/index.js';
+import type { DevelopmentSpecification, ReviewerAgentInput } from '../../agents/index.js';
+import type { ProjectProfile } from '../../project-context/index.js';
 import { FileRunStore } from '../../run-store/index.js';
 import type { RunStore } from '../../run-store/index.js';
 import { VerificationReportSchema } from '../../verification/index.js';
@@ -69,6 +71,22 @@ const VERIFICATION: VerificationResult = {
   stderr: '',
   redacted: true,
 };
+const ADVISORY_COMMAND: VerificationCommand = {
+  id: 'diff-check',
+  label: 'Diff check',
+  command: 'git',
+  args: ['diff', '--check'],
+  required: true,
+  timeoutMs: 1_000,
+};
+const REQUIRED_BUILD_COMMAND: VerificationCommand = {
+  id: 'build',
+  label: 'Build',
+  command: 'pnpm',
+  args: ['build'],
+  required: true,
+  timeoutMs: 1_000,
+};
 const REVIEW: ReviewResult = {
   schemaVersion: 1,
   summary: 'Implementation is ready.',
@@ -87,9 +105,13 @@ const REVIEW: ReviewResult = {
 describe('ReviewCoordinator', () => {
   it('persists review and summary, then waits at review approval', async () => {
     const fixture = await reviewRun();
+    let reviewerInput: ReviewerAgentInput | undefined;
     const coordinator = new ReviewCoordinator({
       store: fixture.store,
-      reviewer: async () => REVIEW,
+      reviewer: async (input) => {
+        reviewerInput = input;
+        return REVIEW;
+      },
       now: () => new Date(NOW),
     });
 
@@ -112,6 +134,12 @@ describe('ReviewCoordinator', () => {
       );
       await expect(coordinator.review({ runId: fixture.run.id })).resolves.toMatchObject({
         status: 'already-completed',
+      });
+      expect(reviewerInput?.verificationContext).toEqual({
+        authoritativeCommands: PLAN.verificationCommands,
+        executedCommandIds: ['test'],
+        advisoryPlanCommands: [],
+        missingRequiredCommandIds: [],
       });
     } finally {
       await fixture.cleanup();
@@ -147,6 +175,95 @@ describe('ReviewCoordinator', () => {
         status: 'already-completed',
         run: { stage: 'blocked' },
       });
+    } finally {
+      await fixture.cleanup();
+    }
+  });
+});
+
+describe('ReviewCoordinator verification authority', () => {
+  it('passes advisory plan commands without treating them as required evidence', async () => {
+    const fixture = await reviewRun({
+      profileVerificationCommands: [PLAN.verificationCommands[0]!],
+      planVerificationCommands: [PLAN.verificationCommands[0]!, ADVISORY_COMMAND],
+      recordedVerificationCommands: [PLAN.verificationCommands[0]!],
+    });
+    const coordinator = new ReviewCoordinator({
+      store: fixture.store,
+      reviewer: async (input) => {
+        expect(input.verificationContext).toEqual({
+          authoritativeCommands: [PLAN.verificationCommands[0]!],
+          executedCommandIds: ['test'],
+          advisoryPlanCommands: [ADVISORY_COMMAND],
+          missingRequiredCommandIds: [],
+        });
+        return {
+          ...REVIEW,
+          findings: [
+            {
+              id: 'advisory-only',
+              severity: 'P1',
+              title: 'Advisory check is missing',
+              description: 'The advisory check did not execute.',
+              status: 'open',
+              verificationCommandId: 'diff-check',
+            },
+          ],
+          unresolvedFindingIds: ['advisory-only'],
+        };
+      },
+    });
+
+    try {
+      await expect(coordinator.review({ runId: fixture.run.id })).resolves.toMatchObject({
+        status: 'ready-for-approval',
+        review: {
+          findings: [
+            expect.objectContaining({
+              id: 'advisory-only',
+              severity: 'P3',
+            }),
+          ],
+        },
+      });
+    } finally {
+      await fixture.cleanup();
+    }
+  });
+
+  it('adds a blocking finding when required authoritative evidence is missing', async () => {
+    const fixture = await reviewRun({
+      profileVerificationCommands: [PLAN.verificationCommands[0]!, REQUIRED_BUILD_COMMAND],
+      planVerificationCommands: [PLAN.verificationCommands[0]!, REQUIRED_BUILD_COMMAND],
+      recordedVerificationCommands: [PLAN.verificationCommands[0]!],
+    });
+    const coordinator = new ReviewCoordinator({
+      store: fixture.store,
+      reviewer: async (input) => {
+        expect(input.verificationContext).toEqual({
+          authoritativeCommands: [PLAN.verificationCommands[0]!, REQUIRED_BUILD_COMMAND],
+          executedCommandIds: ['test'],
+          advisoryPlanCommands: [],
+          missingRequiredCommandIds: ['build'],
+        });
+        return REVIEW;
+      },
+    });
+
+    try {
+      const outcome = await coordinator.review({ runId: fixture.run.id });
+      expect(outcome.status).toBe('blocked');
+      if (outcome.status === 'blocked') {
+        expect(outcome.review.findings).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              severity: 'P1',
+              title: 'Required verification evidence is missing',
+              description: expect.stringContaining('"build"'),
+            }),
+          ]),
+        );
+      }
     } finally {
       await fixture.cleanup();
     }
@@ -597,6 +714,9 @@ async function reviewRun(
     readonly stage?: 'review' | 'verify';
     readonly withPatch?: boolean;
     readonly patch?: string;
+    readonly profileVerificationCommands?: readonly VerificationCommand[];
+    readonly planVerificationCommands?: readonly VerificationCommand[];
+    readonly recordedVerificationCommands?: readonly VerificationCommand[];
   } = {},
 ) {
   const runsRoot = await mkdtemp(path.join(tmpdir(), 'bossflow-review-'));
@@ -606,9 +726,18 @@ async function reviewRun(
     repositoryPath,
     goal: 'Review implementation',
     modelProfile: 'openai',
+    ...projectProfileOption(repositoryPath, options.profileVerificationCommands),
   });
+  const plan: TechnicalPlan = {
+    ...PLAN,
+    verificationCommands: options.planVerificationCommands ?? PLAN.verificationCommands,
+  };
+  const recordedCommands =
+    options.recordedVerificationCommands ??
+    options.profileVerificationCommands ??
+    plan.verificationCommands;
   await store.writeJson(run, 'spec.json', SPECIFICATION);
-  await store.writeJson(run, 'plan.json', PLAN);
+  await store.writeJson(run, 'plan.json', plan);
   if (options.withPatch !== false) {
     await store.writeMarkdown(
       run,
@@ -623,15 +752,7 @@ async function reviewRun(
       schemaVersion: 1,
       runId: run.id,
       status: options.verificationStatus ?? 'passed',
-      records: [
-        {
-          command: PLAN.verificationCommands[0],
-          result:
-            options.verificationStatus === 'failed'
-              ? { ...VERIFICATION, status: 'failed', exitCode: 1 }
-              : VERIFICATION,
-        },
-      ],
+      records: createVerificationRecords(options.verificationStatus ?? 'passed', recordedCommands),
       startedAt: NOW,
       endedAt: NOW,
     }),
@@ -672,5 +793,54 @@ async function reviewRun(
       await rm(runsRoot, { recursive: true, force: true });
       await rm(repositoryPath, { recursive: true, force: true });
     },
+  };
+}
+
+function projectProfileOption(
+  repositoryRoot: string,
+  verificationCommands: readonly VerificationCommand[] | undefined,
+) {
+  return verificationCommands === undefined
+    ? {}
+    : { projectProfile: createProjectProfile(repositoryRoot, verificationCommands) };
+}
+
+function createVerificationRecords(
+  status: 'passed' | 'failed',
+  commands: readonly VerificationCommand[],
+) {
+  return commands.map((command) => ({
+    command,
+    result:
+      status === 'failed'
+        ? { ...VERIFICATION, commandId: command.id, status, exitCode: 1 }
+        : { ...VERIFICATION, commandId: command.id, status },
+  }));
+}
+
+function createProjectProfile(
+  repositoryRoot: string,
+  verificationCommands: readonly VerificationCommand[],
+): ProjectProfile {
+  return {
+    schemaVersion: 1,
+    repositoryRoot,
+    git: {
+      isRepository: true,
+      branch: 'main',
+      status: 'clean',
+      changedPaths: [],
+    },
+    packageManager: 'pnpm',
+    languages: ['TypeScript'],
+    frameworks: [],
+    conventionFiles: [],
+    planningContextFiles: [],
+    testConfigFiles: [],
+    packageScripts: {},
+    verificationCommands,
+    ambiguities: [],
+    requiresConfirmation: false,
+    confirmedByUser: true,
   };
 }
