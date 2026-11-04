@@ -392,9 +392,10 @@ bossflow/
 
 ## 10. 验收清单
 
-截至 2026-11-03，自动化验收状态见
-[BossFlow 测试策略](./TEST_STRATEGY.md)。未在 Codex Desktop 中重新执行真实 `$bossflow`
-会话的条目继续保持未勾选。
+截至 2026-11-04，自动化验收状态见
+[BossFlow 测试策略](./TEST_STRATEGY.md)，真实 Codex campaign 见
+[Codex Conformance Evidence](./conformance/README.md)。未在 Codex Desktop 中重新执行真实
+`$bossflow` 会话的条目继续保持未勾选。
 
 - [ ] 在 Codex Desktop 新聊天中可通过 `$bossflow` 唤起。
 - [ ] 空仓库和已有仓库均有明确初始化路径。
@@ -406,6 +407,7 @@ bossflow/
 - [x] 失败或中断后可定位到具体阶段和产物。
 - [x] 未获授权不会提交、推送、合并或创建 PR。
 - [x] 核心流程协议可在不复制业务逻辑的情况下适配未来 CLI 或 MCP。
+- [x] 使用真实 Codex Coding Agent 在两种项目 profile 上完成至少三个任务。
 
 ## 11. 待确认事项
 

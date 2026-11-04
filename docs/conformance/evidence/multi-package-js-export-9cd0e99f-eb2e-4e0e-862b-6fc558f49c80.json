@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "adapterId": "codex",
+  "scenarioId": "multi-package-js-export",
+  "projectProfile": {
+    "id": "multi-package-javascript",
+    "packageManager": "pnpm",
+    "languages": ["JavaScript"]
+  },
+  "runId": "9cd0e99f-eb2e-4e0e-862b-6fc558f49c80",
+  "stage": "completed",
+  "outcome": "completed",
+  "changedPaths": ["packages/app/src/index.js"],
+  "verification": [
+    {
+      "commandId": "lint",
+      "status": "passed",
+      "exitCode": 0
+    },
+    {
+      "commandId": "typecheck",
+      "status": "passed",
+      "exitCode": 0
+    },
+    {
+      "commandId": "test",
+      "status": "passed",
+      "exitCode": 0
+    },
+    {
+      "commandId": "build",
+      "status": "passed",
+      "exitCode": 0
+    }
+  ],
+  "reviewFindings": [],
+  "userInterventions": ["plan:approved by conformance", "review:approved by conformance"],
+  "authorizedExternalActions": [],
+  "artifactHashes": {
+    "request.md": "a6469540151a3d6ed965a912bae88beb092f62de66205addc9848a0ab4a1db92",
+    "spec.json": "f48658bf87b68718a6176efa1161034dd26d83dd1e368ab8ee1a752a0c9a264d",
+    "spec.md": "ed4bbf33a14bec618f488c71a9cbc63e6317ad87a271aa2636441a55577dac46",
+    "plan.json": "706c71cf60152aeb56681feb6ce0b2370923f122ac2ed1f905f025eddcb9a468",
+    "plan.md": "01213cd8cbaf472bd74da0dd503b98e4cf38536ffc97941e5eee29d307180437",
+    "implementation.patch": "1d6cb4a0aed4b63399e39821b6d7aa9ebf62f8e14586ea4a0e7571b1b1dbdd93",
+    "implementation.json": "6962734b5cd898e4b2e26125fb813523742d05a572b7d0a10c3c3e1ff9790eee",
+    "verification.md": "01836f1b99d4eb27b7c49e88f99df921ce44310b87aaa616581dc16a9d5ce2a8",
+    "verification.json": "33868e498569193eb1bccb6c6bde4c071861ab9ea719d02beb7a82d5e3b3e500",
+    "review.md": "7fdc87ae8c2efea99634eb79d011972cf71acc1ee3ce4b39a335ce9b141d3108",
+    "review.json": "9ce860dca4002e52bab7c5a4cabe6c6e75026e94692043f7e5b5de80b5cca4a0",
+    "summary.md": "a381e2381435f152133ad6f18986f9e21112803edd175eabf8c0721a2851688b",
+    "summary.json": "d4c054cb7ef931d2794b4b3b0dffabaacc62d954173e705ef4711506ca4b9537"
+  },
+  "startedAt": "2026-11-04T09:58:26.338Z",
+  "endedAt": "2026-11-04T10:00:15.381Z"
+}

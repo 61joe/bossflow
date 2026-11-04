@@ -26,6 +26,7 @@ export function createCodexWorktreeImplementer(): WorktreeImplementer {
         ],
         {
           cwd: context.worktreePath,
+          stdin: 'ignore',
           reject: false,
           timeout: CODEX_IMPLEMENTATION_TIMEOUT_MS,
           maxBuffer: CODEX_MAX_OUTPUT_BYTES,

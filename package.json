@@ -11,6 +11,7 @@
     "build": "pnpm -r --if-present build",
     "changeset": "changeset",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "conformance:codex": "pnpm build && node scripts/conformance-codex.mjs",
     "dev": "node scripts/dev.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
