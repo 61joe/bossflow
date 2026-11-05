@@ -68,10 +68,13 @@ export function createFakeWorkflowRuntime(
     },
     generateTechnicalPlan: async () => {
       calls.plan += 1;
-      return PLAN;
+      return options.technicalPlan ?? PLAN;
     },
     generateReview: async (input) => {
       calls.review += 1;
+      if (options.reviewer !== undefined) {
+        return options.reviewer(input);
+      }
       const review = {
         schemaVersion: 1 as const,
         summary: `Reviewed ${input.verificationEvidence.length} verification commands.`,
@@ -103,6 +106,9 @@ export function createFakeWorkflowRuntime(
     },
     implementer: async (context) => {
       calls.implementation += 1;
+      if (options.implementer !== undefined) {
+        return options.implementer(context);
+      }
       const outputPath = path.join(context.worktreePath, 'src', 'generated.ts');
       await mkdir(path.dirname(outputPath), { recursive: true });
       await writeFile(outputPath, 'export const generatedByBossFlow = true;\n', 'utf8');

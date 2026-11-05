@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 import { FileRunStore } from '@bossflow/core';
+import type { ProjectProfile } from '@bossflow/core';
 
 import { getResumeMessages, main } from '../index.js';
 
@@ -42,6 +43,14 @@ const plan = {
       required: true,
       timeoutMs: 1_000,
     },
+    {
+      id: 'browser',
+      label: 'Browser test',
+      command: 'pnpm',
+      args: ['test:browser'],
+      required: true,
+      timeoutMs: 2_000,
+    },
   ],
 };
 
@@ -53,6 +62,7 @@ describe('workflow CLI commands', () => {
       repositoryPath: '/tmp/project',
       goal: 'Resume',
       modelProfile: 'openai',
+      attempt: 1,
       workflowRevision: 1,
       approvals: [],
       artifacts: [],
@@ -124,6 +134,71 @@ describe('workflow CLI commands', () => {
       expect(fixture.stdout).toHaveBeenCalledWith(
         `Plan approval required: bossflow approve ${fixture.runId} --gate plan\n`,
       );
+    } finally {
+      await fixture.cleanup();
+    }
+  });
+
+  it('adopts selected Plan verification commands through the CLI', async () => {
+    const fixture = await createPlanRun();
+
+    try {
+      await expect(
+        main([
+          'node',
+          'bossflow',
+          'approve',
+          fixture.runId,
+          '--gate',
+          'plan',
+          '--verification',
+          'browser',
+          '--verification',
+          'test',
+        ]),
+      ).resolves.toBe(0);
+      const saved = await fixture.store.read(fixture.runId);
+      expect(saved.approvals?.[0]).toMatchObject({
+        verificationCommandIds: ['browser', 'test'],
+      });
+      expect(saved.approvals?.[0]?.verificationCommands).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: 'browser' }),
+          expect.objectContaining({ id: 'test' }),
+        ]),
+      );
+      expect(saved.projectProfile?.verificationCommands).toEqual(
+        expect.arrayContaining([expect.objectContaining({ id: 'browser' })]),
+      );
+      expect(fixture.stdout).toHaveBeenCalledWith(
+        'Adopted Plan verification commands: browser, test.\n',
+      );
+    } finally {
+      await fixture.cleanup();
+    }
+  });
+
+  it('rejects an unknown verification command atomically', async () => {
+    const fixture = await createPlanRun();
+
+    try {
+      await expect(
+        main([
+          'node',
+          'bossflow',
+          'approve',
+          fixture.runId,
+          '--gate',
+          'plan',
+          '--verification',
+          'missing',
+        ]),
+      ).resolves.toBe(2);
+      const saved = await fixture.store.read(fixture.runId);
+      expect(saved.approvals).toEqual([]);
+      expect(saved.projectProfile?.verificationCommands).toEqual([
+        expect.objectContaining({ id: 'test' }),
+      ]);
     } finally {
       await fixture.cleanup();
     }
@@ -224,6 +299,9 @@ describe('workflow CLI commands', () => {
       ).resolves.toBe(2);
       await expect(
         main(['node', 'bossflow', 'approve', 'run-1', '--gate', 'review', '--action', 'invalid']),
+      ).resolves.toBe(2);
+      await expect(
+        main(['node', 'bossflow', 'approve', 'run-1', '--gate', 'plan', '--verification', '']),
       ).resolves.toBe(2);
     } finally {
       await fixture.cleanup();
@@ -394,6 +472,7 @@ async function createStoredRun(projectRoot: string, store: FileRunStore, include
     repositoryPath: projectRoot,
     goal: 'Controlled workflow',
     modelProfile: 'openai',
+    projectProfile: createProjectProfile(projectRoot),
   });
   await store.writeJson(created, 'spec.json', specification);
   if (!includePlan) {
@@ -407,5 +486,29 @@ async function createStoredRun(projectRoot: string, store: FileRunStore, include
       stage: 'plan_approval',
       updatedAt: new Date().toISOString(),
     }),
+  };
+}
+
+function createProjectProfile(repositoryRoot: string): ProjectProfile {
+  return {
+    schemaVersion: 1,
+    repositoryRoot,
+    git: {
+      isRepository: true,
+      branch: 'main',
+      status: 'clean',
+      changedPaths: [],
+    },
+    packageManager: 'pnpm',
+    languages: ['TypeScript'],
+    frameworks: [],
+    conventionFiles: [],
+    planningContextFiles: [],
+    testConfigFiles: [],
+    packageScripts: {},
+    verificationCommands: [plan.verificationCommands[0]!],
+    ambiguities: [],
+    requiresConfirmation: false,
+    confirmedByUser: true,
   };
 }

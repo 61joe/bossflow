@@ -1,13 +1,24 @@
 #!/usr/bin/env node
 
-import 'dotenv/config';
+import { evaluateNodeEntrypoint } from './runtime/index.js';
 
-import { main } from './index.js';
-import { formatError, writeError } from './output/index.js';
+const result = await evaluateNodeEntrypoint(process.version, async () => {
+  await import('dotenv/config');
+  const [{ main }, { formatError, writeError }] = await Promise.all([
+    import('./index.js'),
+    import('./output/index.js'),
+  ]);
+  return { main, formatError, writeError };
+});
 
-try {
-  process.exitCode = await main();
-} catch (error: unknown) {
-  writeError(formatError(error));
+if (!result.ok) {
+  process.stderr.write(`${result.message}\n`);
   process.exitCode = 1;
+} else {
+  try {
+    process.exitCode = await result.value.main();
+  } catch (error: unknown) {
+    result.value.writeError(result.value.formatError(error));
+    process.exitCode = 1;
+  }
 }

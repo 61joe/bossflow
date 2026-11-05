@@ -4,13 +4,16 @@ import { ImplementationResultSchema, TechnicalPlanSchema } from '../contracts/in
 import type { ImplementationResult, TechnicalPlan, WorktreeMetadata } from '../contracts/index.js';
 import { redactText, redactUnknown } from '../redaction/index.js';
 import type { WorkflowRun } from '../workflow/index.js';
+import { findActiveArtifact } from '../run-store/index.js';
 import type { RunStore } from '../run-store/index.js';
 import type { WorktreeDiff } from '../worktree/index.js';
 import {
   APPROVED_PLAN_FILE,
   IMPLEMENTATION_JSON_FILE,
+  IMPLEMENTATION_MARKDOWN_FILE,
   IMPLEMENTATION_PATCH_FILE,
 } from './constant.js';
+import { renderImplementation } from './renderer.js';
 import { PersistedImplementationRecordSchema } from './schema.js';
 import type {
   ExecuteImplementationOptions,
@@ -47,7 +50,10 @@ export class ImplementationCoordinator {
     let run = await this.#enterBuild(initialRun);
     const repositoryRoot = run.projectProfile?.repositoryRoot ?? run.repositoryPath;
     const mainStatusBefore = await this.#worktreeManager.readStatus(repositoryRoot);
-    const worktree = await this.#ensureWorktree(run, repositoryRoot);
+    const worktree = {
+      ...(await this.#ensureWorktree(run, repositoryRoot)),
+      repositoryFingerprint: run.worktree?.repositoryFingerprint ?? mainStatusBefore.fingerprint,
+    };
     run = await this.#persistWorktree(run, worktree);
 
     const result = await options.implementer({
@@ -120,9 +126,7 @@ export class ImplementationCoordinator {
   }
 
   async #loadApprovedPlan(run: WorkflowRun): Promise<TechnicalPlan> {
-    const planArtifact = [...(run.artifacts ?? [])]
-      .reverse()
-      .find((artifact) => artifact.kind === 'plan' && artifact.fileName === APPROVED_PLAN_FILE);
+    const planArtifact = findActiveArtifact(run, 'plan', APPROVED_PLAN_FILE);
     if (planArtifact?.sha256 === undefined) {
       throw new Error(`Run "${run.id}" has no persisted plan artifact.`);
     }
@@ -186,10 +190,7 @@ export class ImplementationCoordinator {
     if (record.patchFileName === undefined || record.patchSha256 === undefined) {
       return;
     }
-    const artifact = run.artifacts?.find(
-      (candidate) =>
-        candidate.kind === 'implementation' && candidate.fileName === record.patchFileName,
-    );
+    const artifact = findActiveArtifact(run, 'implementation', record.patchFileName);
     const content = await this.#store.readText(run, record.patchFileName);
     const sha256 = createHash('sha256').update(content).digest('hex');
     if (
@@ -231,7 +232,8 @@ export class ImplementationCoordinator {
       run.worktree?.path === worktree.path &&
       run.worktree.branch === worktree.branch &&
       run.worktree.baseCommit === worktree.baseCommit &&
-      run.worktree.status === worktree.status
+      run.worktree.status === worktree.status &&
+      run.worktree.repositoryFingerprint === worktree.repositoryFingerprint
     ) {
       return run;
     }
@@ -271,15 +273,17 @@ export class ImplementationCoordinator {
       }),
     );
     await this.#store.writeJson(options.run, IMPLEMENTATION_JSON_FILE, record);
+    await this.#store.writeMarkdown(
+      options.run,
+      IMPLEMENTATION_MARKDOWN_FILE,
+      renderImplementation(record),
+    );
     return this.#store.read(options.run.id);
   }
 }
 
 function findImplementationArtifact(run: WorkflowRun) {
-  return run.artifacts?.find(
-    (artifact) =>
-      artifact.kind === 'implementation' && artifact.fileName === IMPLEMENTATION_JSON_FILE,
-  );
+  return findActiveArtifact(run, 'implementation', IMPLEMENTATION_JSON_FILE);
 }
 
 function isBlockedRecord(record: PersistedImplementationRecord): boolean {

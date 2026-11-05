@@ -8,6 +8,8 @@ const baseRun: WorkflowRun = {
   goal: 'Add export support',
   modelProfile: 'openai',
   stage: 'spec',
+  attempt: 1,
+  artifacts: [],
   createdAt: '2026-10-30T00:00:00.000Z',
   updatedAt: '2026-10-30T00:00:00.000Z',
 };

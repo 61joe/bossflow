@@ -99,8 +99,8 @@ describe('ImplementationCoordinator validation', () => {
 
     try {
       workspace.statuses = [
-        { isDirty: false, fingerprint: 'before' },
-        { isDirty: false, fingerprint: 'after' },
+        { isDirty: false, fingerprint: 'a'.repeat(64) },
+        { isDirty: false, fingerprint: 'b'.repeat(64) },
       ];
       await expect(
         coordinator.execute({

@@ -1,2 +1,3 @@
 export { inspectDoctor } from './doctor.js';
-export type { DoctorReport } from './types.js';
+export { renderDoctorPreflight } from './renderer.js';
+export type { DoctorCheck, DoctorOptions, DoctorPreflightReport, DoctorReport } from './types.js';

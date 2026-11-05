@@ -3,6 +3,7 @@ import { realpath } from 'node:fs/promises';
 import path from 'node:path';
 
 import type { WorkflowRun } from '../workflow/index.js';
+import { findActiveArtifact } from '../run-store/index.js';
 import { CommandRunner } from './command-runner.js';
 import { VERIFICATION_JSON_FILE, VERIFICATION_MARKDOWN_FILE } from './constant.js';
 import { renderVerification } from './renderer.js';
@@ -86,10 +87,7 @@ export class VerificationCoordinator {
   }
 
   async #recover(run: WorkflowRun): Promise<VerificationOutcome | undefined> {
-    const artifact = run.artifacts?.find(
-      (candidate) =>
-        candidate.kind === 'verification' && candidate.fileName === VERIFICATION_JSON_FILE,
-    );
+    const artifact = findActiveArtifact(run, 'verification', VERIFICATION_JSON_FILE);
     if (artifact?.sha256 === undefined) {
       return undefined;
     }

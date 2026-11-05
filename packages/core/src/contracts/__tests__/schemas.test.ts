@@ -1,3 +1,4 @@
+/* eslint-disable max-lines, max-lines-per-function -- Contract scenarios share schema fixtures. */
 import {
   ApprovalRecordSchema,
   ImplementationResultSchema,
@@ -75,6 +76,59 @@ describe('workflow contracts', () => {
         workflowRevision: 2,
       }),
     ).toThrow('must include');
+  });
+
+  it('validates Plan verification adoption metadata', () => {
+    const command = {
+      id: 'browser',
+      label: 'Browser test',
+      command: 'pnpm',
+      args: ['test:browser'],
+      required: true,
+      timeoutMs: 120000,
+    };
+    const approval = {
+      id: 'approval-1',
+      gate: 'plan',
+      decision: 'approved',
+      actor: 'user',
+      decidedAt: '2026-11-02T00:00:00.000Z',
+      workflowRevision: 2,
+      artifactFileName: 'plan.json',
+      artifactSha256: 'a'.repeat(64),
+      verificationCommandIds: ['browser'],
+      verificationCommands: [command],
+    };
+    expect(ApprovalRecordSchema.parse(approval)).toMatchObject({
+      verificationCommandIds: ['browser'],
+      verificationCommands: [command],
+    });
+    expect(() =>
+      ApprovalRecordSchema.parse({
+        ...approval,
+        verificationCommands: undefined,
+      }),
+    ).toThrow('must be provided together');
+    expect(() =>
+      ApprovalRecordSchema.parse({
+        ...approval,
+        verificationCommandIds: ['browser', 'browser'],
+        verificationCommands: [command, command],
+      }),
+    ).toThrow('must be unique');
+    expect(() =>
+      ApprovalRecordSchema.parse({
+        ...approval,
+        verificationCommands: [{ ...command, id: 'other' }],
+      }),
+    ).toThrow('must match the adopted command IDs');
+    expect(() =>
+      ApprovalRecordSchema.parse({
+        ...approval,
+        gate: 'review',
+        artifactFileName: 'review.json',
+      }),
+    ).toThrow('Only plan approvals may adopt');
   });
 
   it('backfills new run metadata when reading a legacy run document', () => {
@@ -169,6 +223,95 @@ describe('specialist agent contracts', () => {
         notes: [],
       }),
     ).toMatchObject({ status: 'completed' });
+  });
+
+  it.each([
+    {
+      kind: 'nonzero-exit',
+      exitCode: 2,
+      durationMs: 25,
+      diagnostic: 'process failed',
+    },
+    {
+      kind: 'timeout',
+      timedOut: true,
+      durationMs: 30,
+      diagnostic: 'process timed out',
+      signal: 'SIGTERM',
+    },
+    {
+      kind: 'canceled',
+      durationMs: 35,
+      diagnostic: 'process canceled',
+    },
+    {
+      kind: 'signaled',
+      signal: 'SIGKILL',
+      durationMs: 40,
+      diagnostic: 'process killed',
+    },
+    {
+      kind: 'spawn-error',
+      diagnostic: 'process could not start',
+    },
+    {
+      kind: 'unknown',
+      durationMs: 45,
+      diagnostic: 'process outcome unavailable',
+    },
+  ])('validates $kind implementation failure evidence', (failure) => {
+    expect(
+      ImplementationResultSchema.parse({
+        schemaVersion: 1,
+        status: 'blocked',
+        summary: 'Implementation failed.',
+        changedPaths: [],
+        testChanges: [],
+        notes: ['failure details'],
+        failure,
+      }),
+    ).toMatchObject({ status: 'blocked', failure });
+  });
+
+  it('rejects failure evidence on a completed implementation result', () => {
+    expect(() =>
+      ImplementationResultSchema.parse({
+        schemaVersion: 1,
+        status: 'completed',
+        summary: 'Implementation completed.',
+        changedPaths: ['src/index.ts'],
+        testChanges: [],
+        notes: [],
+        failure: {
+          kind: 'unknown',
+          diagnostic: 'Contradictory result.',
+        },
+      }),
+    ).toThrow('Completed implementation results cannot include failure evidence');
+  });
+
+  it.each([
+    { kind: 'nonzero-exit', durationMs: 1, diagnostic: 'missing exit code' },
+    {
+      kind: 'timeout',
+      timedOut: false,
+      durationMs: 1,
+      diagnostic: 'invalid timeout flag',
+    },
+    { kind: 'signaled', durationMs: 1, diagnostic: 'missing signal' },
+    { kind: 'unsupported', diagnostic: 'unsupported kind' },
+  ])('rejects invalid implementation failure evidence', (failure) => {
+    expect(() =>
+      ImplementationResultSchema.parse({
+        schemaVersion: 1,
+        status: 'blocked',
+        summary: 'Implementation failed.',
+        changedPaths: [],
+        testChanges: [],
+        notes: [],
+        failure,
+      }),
+    ).toThrow();
   });
 
   it('validates unresolved review findings and rejects unknown references', () => {

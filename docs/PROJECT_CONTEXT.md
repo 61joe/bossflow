@@ -80,3 +80,11 @@ workflow:
 - `package.json` 无法解析或校验。
 
 用户查看原因后，可以使用 `bossflow run ... --confirm-project` 显式接受检测结果。运行记录中的 `projectProfile.confirmedByUser` 会保存该决定，后续恢复运行直接复用同一项目档案和命令。
+
+## 运行前预检
+
+`bossflow doctor --run` 基于同一套项目检测生成本地 readiness 快照。它不会创建默认
+`.bossflow-worktrees` 目录，也不会写入 Run。检查失败时同时输出问题与修复动作，例如提交或
+stash 主工作区、补充唯一锁文件、修复验证命令配置或调整父目录写权限。
+
+预检只判断本地可执行条件，不把网络请求纳入默认检查，避免无意消耗模型额度或依赖临时网络状态。

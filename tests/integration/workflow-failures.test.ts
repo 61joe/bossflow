@@ -1,4 +1,5 @@
-import { readFile } from 'node:fs/promises';
+/* eslint-disable max-lines-per-function -- Failure scenarios share one disposable workflow fixture. */
+import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
@@ -11,6 +12,79 @@ import { createFakeWorkflowRuntime, createRepositoryFixture } from './support/in
 jest.setTimeout(30_000);
 
 describe('controlled workflow failure integration', () => {
+  it('blocks when a Coding Agent writes files and returns no numeric exit outcome', async () => {
+    const fixture = await createRepositoryFixture('clean');
+    const fakes = createFakeWorkflowRuntime({
+      implementer: async (context) => {
+        const outputPath = path.join(context.worktreePath, 'src', 'partial.ts');
+        await mkdir(path.dirname(outputPath), { recursive: true });
+        await writeFile(outputPath, 'export const partial = true;\n', 'utf8');
+        return {
+          schemaVersion: 1,
+          status: 'blocked',
+          summary: 'Coding Agent outcome unavailable.',
+          changedPaths: ['src/partial.ts'],
+          testChanges: [],
+          notes: ['No process outcome was available.'],
+          failure: {
+            kind: 'unknown',
+            diagnostic: 'Agent exited without a numeric code.',
+          },
+        };
+      },
+    });
+    const service = createService(fixture.root, fixture.worktreesRoot, fakes);
+    const projectContext = await inspectProject(fixture.root);
+
+    try {
+      const created = await service.run({
+        goal: 'Exercise an unknown Coding Agent outcome.',
+        projectContext,
+        modelRuntime: fakes.runtime,
+        modelProfile: 'fixture',
+        confirmedProject: true,
+        stopAfterSpec: false,
+      });
+      await service.approve({
+        runId: created.run.id,
+        gate: 'plan',
+        actions: [],
+        actor: 'fixture-user',
+      });
+
+      await expect(
+        service.resume({
+          runId: created.run.id,
+          modelRuntime: fakes.runtime,
+          redactionSecrets: [],
+        }),
+      ).rejects.toMatchObject({ exitCode: CLI_EXIT_CODES.BLOCKED });
+
+      const blocked = await service.getRun(created.run.id);
+      const runDirectory = path.join(fixture.root, '.bossflow', 'runs', created.run.id);
+      const implementation = JSON.parse(
+        await readFile(path.join(runDirectory, 'implementation.json'), 'utf8'),
+      );
+      expect(blocked.stage).toBe('blocked');
+      expect(implementation.result.failure).toMatchObject({
+        kind: 'unknown',
+        diagnostic: 'Agent exited without a numeric code.',
+      });
+      if (blocked.worktree === undefined) {
+        throw new Error('Expected a blocked implementation Worktree.');
+      }
+      await expect(
+        readFile(path.join(runDirectory, 'implementation.md'), 'utf8'),
+      ).resolves.toContain('- Kind: unknown');
+      await expect(
+        access(path.join(blocked.worktree.path, 'src', 'partial.ts')),
+      ).resolves.toBeUndefined();
+      await expect(access(path.join(fixture.root, 'src', 'partial.ts'))).rejects.toThrow();
+    } finally {
+      await fixture.cleanup();
+    }
+  });
+
   it('blocks on a real failing verification command without touching main files', async () => {
     const fixture = await createRepositoryFixture('failing-verification');
     const fakes = createFakeWorkflowRuntime();

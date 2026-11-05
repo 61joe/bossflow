@@ -34,6 +34,7 @@ describe('FileRunStore validation', () => {
         goal: 'Manual run',
         modelProfile: 'openai',
         stage: 'spec',
+        attempt: 1,
         workflowRevision: 1,
         approvals: [],
         artifacts: [],

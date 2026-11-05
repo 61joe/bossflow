@@ -16,6 +16,10 @@ export interface ApprovalRecord {
   readonly artifactSha256?: string | undefined;
   /** Explicit actions authorized only for an external-action approval. */
   readonly actions?: readonly ApprovalAction[] | undefined;
+  /** Verification command IDs explicitly adopted from the approved Plan. */
+  readonly verificationCommandIds?: readonly string[] | undefined;
+  /** Exact command definitions bound to the approved Plan artifact. */
+  readonly verificationCommands?: readonly VerificationCommand[] | undefined;
   readonly notes?: string | undefined;
 }
 
@@ -27,6 +31,8 @@ export interface WorktreeMetadata {
   readonly baseCommit: string;
   readonly createdAt: string;
   readonly status: WorktreeStatus;
+  /** Main-repository fingerprint captured when the run worktree was created. */
+  readonly repositoryFingerprint?: string | undefined;
   readonly cleanedAt?: string | undefined;
 }
 
@@ -46,6 +52,10 @@ export interface ArtifactReference {
   readonly fileName: string;
   readonly path: string;
   readonly createdAt: string;
+  /** Workflow attempt that produced this artifact. */
+  readonly attempt?: number | undefined;
+  /** Set when newer evidence superseded this artifact for current-stage resolution. */
+  readonly supersededAt?: string | undefined;
   readonly sizeBytes?: number | undefined;
   readonly sha256?: string | undefined;
 }
@@ -130,6 +140,51 @@ export interface RequirementCoverage {
 
 export type ImplementationResultStatus = 'completed' | 'blocked';
 
+export type ImplementationFailureKind =
+  'nonzero-exit' | 'timeout' | 'canceled' | 'signaled' | 'spawn-error' | 'unknown';
+
+/**
+ * Normalized process evidence for a Coding Agent that did not complete successfully.
+ *
+ * @remarks
+ * Adapters own provider-specific interpretation. Workflow code must treat every kind as a blocked
+ * attempt and must not infer success from files changed before the failure.
+ */
+export type ImplementationFailureEvidence =
+  | {
+      readonly kind: 'nonzero-exit';
+      readonly exitCode: number;
+      readonly durationMs: number;
+      readonly diagnostic: string;
+    }
+  | {
+      readonly kind: 'timeout';
+      readonly timedOut: true;
+      readonly durationMs: number;
+      readonly diagnostic: string;
+      readonly signal?: string | undefined;
+    }
+  | {
+      readonly kind: 'canceled';
+      readonly durationMs: number;
+      readonly diagnostic: string;
+    }
+  | {
+      readonly kind: 'signaled';
+      readonly signal: string;
+      readonly durationMs: number;
+      readonly diagnostic: string;
+    }
+  | {
+      readonly kind: 'spawn-error';
+      readonly diagnostic: string;
+    }
+  | {
+      readonly kind: 'unknown';
+      readonly durationMs?: number | undefined;
+      readonly diagnostic: string;
+    };
+
 export interface ImplementationResult {
   readonly schemaVersion: 1;
   readonly status: ImplementationResultStatus;
@@ -137,6 +192,7 @@ export interface ImplementationResult {
   readonly changedPaths: readonly string[];
   readonly testChanges: readonly string[];
   readonly notes: readonly string[];
+  readonly failure?: ImplementationFailureEvidence | undefined;
 }
 
 export interface ReviewResult {

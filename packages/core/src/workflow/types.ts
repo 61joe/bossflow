@@ -27,6 +27,8 @@ export interface WorkflowRun {
   readonly model?: string | undefined;
   readonly projectProfile?: ProjectProfile | undefined;
   readonly stage: WorkflowStage;
+  /** Monotonic corrective attempt number for this Run. */
+  readonly attempt?: number | undefined;
   readonly workflowRevision?: number | undefined;
   readonly approvals?: readonly ApprovalRecord[] | undefined;
   readonly worktree?: WorktreeMetadata | undefined;
@@ -34,6 +36,14 @@ export interface WorkflowRun {
   readonly failure?: TerminalFailure | undefined;
   readonly createdAt: string;
   readonly updatedAt: string;
+}
+
+/** Parsed Run state after schema defaults have been applied. */
+export interface PersistedWorkflowRun extends WorkflowRun {
+  readonly attempt: number;
+  readonly workflowRevision: number;
+  readonly approvals: readonly ApprovalRecord[];
+  readonly artifacts: readonly ArtifactReference[];
 }
 
 export interface TransitionWorkflowOptions {

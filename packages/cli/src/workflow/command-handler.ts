@@ -5,11 +5,13 @@ import { FileRunStore, inspectProject } from '@bossflow/core';
 import type { WorkflowRun } from '@bossflow/core';
 
 import { loadConfig } from '../config/index.js';
+import { inspectDoctor, renderDoctorPreflight } from '../doctor/index.js';
 import { resolveModelRuntime } from '../models/index.js';
 import { writeLine } from '../output/index.js';
 import type {
   AdapterInstallCommandOptions,
   ApproveCommandOptions,
+  RetryCommandOptions,
   RunCommandOptions,
 } from '../types.js';
 import { createDefaultCodingAgentRegistry } from './coding-agent-registry.js';
@@ -109,6 +111,10 @@ export async function executeRun(
     return;
   }
   writeLine(`Technical plan created with ${result.plan.tasks.length} tasks.`);
+  const readiness = await inspectDoctor(projectRoot, { runPreflight: true });
+  for (const line of renderDoctorPreflight(readiness.preflight)) {
+    writeLine(line);
+  }
   writeLine(`Plan approval required: bossflow approve ${result.run.id} --gate plan`);
 }
 
@@ -129,11 +135,15 @@ export async function executeApprove(
     runId,
     gate: options.gate,
     actions: options.action,
+    verificationCommandIds: options.verification,
     actor: options.actor ?? userInfo().username,
     ...(options.note === undefined ? {} : { note: options.note }),
   });
   writeLine(`Approval recorded for run ${run.id} at gate "${options.gate}".`);
   if (options.gate === 'plan') {
+    if (options.verification.length > 0) {
+      writeLine(`Adopted Plan verification commands: ${options.verification.join(', ')}.`);
+    }
     writeLine(`Next action: bossflow resume ${run.id}`);
   } else if (options.action.length === 0) {
     writeLine('No external actions were authorized.');
@@ -162,6 +172,37 @@ export async function executeResume(projectRoot: string, runId: string): Promise
           modelRuntime: resolvedRuntime.runtime,
           redactionSecrets: resolvedRuntime.redactionSecrets,
         }),
+  });
+  for (const message of getResumeMessages(run)) {
+    writeLine(message);
+  }
+}
+
+export async function executeRetry(
+  projectRoot: string,
+  runId: string,
+  options: RetryCommandOptions,
+): Promise<void> {
+  const config = await loadConfig(projectRoot);
+  const service = createWorkflowService(projectRoot, config);
+  const current = await service.getRun(runId);
+  if (current.stage !== 'blocked' && current.stage !== 'failed') {
+    throw new WorkflowCliError(
+      `Run "${runId}" can only be retried from blocked or failed; current stage is "${current.stage}".`,
+      CLI_EXIT_CODES.APPROVAL_REQUIRED,
+    );
+  }
+  const resolvedRuntime = await resolveModelRuntime({
+    projectRoot,
+    profileName: current.modelProfile,
+    ...(current.model === undefined ? {} : { modelOverride: current.model }),
+  });
+  const run = await service.retry({
+    runId,
+    from: options.from,
+    modelRuntime: resolvedRuntime.runtime,
+    redactionSecrets: resolvedRuntime.redactionSecrets,
+    ...(options.verification.length === 0 ? {} : { verificationCommandIds: options.verification }),
   });
   for (const message of getResumeMessages(run)) {
     writeLine(message);

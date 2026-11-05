@@ -21,6 +21,16 @@ export interface FileRunStoreOptions {
   readonly lockStaleMs?: number;
 }
 
+export interface BeginRetryOptions {
+  readonly target: 'build' | 'verify';
+  readonly expectedAttempt: number;
+  readonly expectedWorkflowRevision: number;
+  readonly expectedUpdatedAt: string;
+  readonly evidenceFileNames: readonly string[];
+  readonly updatedAt: string;
+  readonly projectProfile?: ProjectProfile | undefined;
+}
+
 export interface RunStore {
   create(input: CreateRunInput): Promise<WorkflowRun>;
   read(runId: string): Promise<WorkflowRun>;

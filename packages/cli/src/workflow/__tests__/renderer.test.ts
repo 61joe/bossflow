@@ -127,6 +127,7 @@ function createRun(): WorkflowRun {
     goal: 'Render workflow',
     modelProfile: 'openai',
     stage: 'spec',
+    attempt: 1,
     workflowRevision: 1,
     approvals: [],
     artifacts: [],

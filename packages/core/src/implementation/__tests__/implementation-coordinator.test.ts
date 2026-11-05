@@ -58,6 +58,9 @@ describe('ImplementationCoordinator artifacts', () => {
       await expect(
         readFile(path.join(runDirectory, 'implementation.patch'), 'utf8'),
       ).resolves.toContain('+export const value = 1;');
+      await expect(
+        readFile(path.join(runDirectory, 'implementation.md'), 'utf8'),
+      ).resolves.toContain('- Status: completed');
     } finally {
       await fixture.cleanup();
     }
@@ -109,17 +112,25 @@ describe('ImplementationCoordinator artifact safety', () => {
         implementer: async () => ({
           ...RESULT,
           notes: [`token=${secret}`],
+          failure: {
+            kind: 'unknown',
+            diagnostic: `failure token=${secret}`,
+          },
+          status: 'blocked',
         }),
       });
 
       const runDirectory = path.join(fixture.runsRoot, fixture.run.id);
       const record = await readFile(path.join(runDirectory, 'implementation.json'), 'utf8');
+      const markdown = await readFile(path.join(runDirectory, 'implementation.md'), 'utf8');
       const patch = await readFile(path.join(runDirectory, 'implementation.patch'), 'utf8');
       expect(record).not.toContain(secret);
+      expect(markdown).not.toContain(secret);
       expect(patch).not.toContain(secret);
       expect(record).toContain('[REDACTED]');
+      expect(markdown).toContain('[REDACTED]');
       expect(patch).toContain('[REDACTED]');
-      if (outcome.status === 'implemented') {
+      if (outcome.status === 'blocked') {
         expect(outcome.diff.patch).not.toContain(secret);
         expect(outcome.diff.patch).toContain('[REDACTED]');
       }

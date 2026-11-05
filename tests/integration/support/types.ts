@@ -1,4 +1,4 @@
-import type { ModelRuntime, WorktreeImplementer } from '@bossflow/core';
+import type { ModelRuntime, TechnicalPlan, WorktreeImplementer } from '@bossflow/core';
 import type { WorkflowServiceOptions } from '@bossflow/cli';
 
 export type RepositoryFixtureScenario =
@@ -28,4 +28,7 @@ export interface FakeWorkflowRuntime {
 
 export interface FakeWorkflowRuntimeOptions {
   readonly reviewBlocked?: boolean;
+  readonly technicalPlan?: TechnicalPlan;
+  readonly implementer?: WorktreeImplementer;
+  readonly reviewer?: NonNullable<WorkflowServiceOptions['generateReview']>;
 }

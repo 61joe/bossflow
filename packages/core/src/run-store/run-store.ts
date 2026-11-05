@@ -1,3 +1,4 @@
+/* eslint-disable max-lines -- Run Store keeps lock-scoped mutation and recovery operations together. */
 import { createHash, randomUUID } from 'node:crypto';
 import { mkdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -9,9 +10,11 @@ import {
   INITIAL_WORKFLOW_REVISION,
   INITIAL_WORKFLOW_STAGE,
   parseWorkflowRun,
+  prepareRetryWorkflow,
   transitionWorkflow,
 } from '../workflow/index.js';
 import type {
+  PersistedWorkflowRun,
   TransitionResult,
   TransitionWorkflowOptions,
   WorkflowRun,
@@ -25,7 +28,7 @@ import {
   REQUEST_ARTIFACT_FILE,
   RUN_METADATA_FILE,
 } from './constant.js';
-import type { CreateRunInput, FileRunStoreOptions, RunStore } from './types.js';
+import type { BeginRetryOptions, CreateRunInput, FileRunStoreOptions, RunStore } from './types.js';
 
 export class FileRunStore implements RunStore {
   readonly #runsRoot: string;
@@ -49,7 +52,7 @@ export class FileRunStore implements RunStore {
     const now = new Date().toISOString();
     const id = randomUUID();
     const requestContent = `# Run request\n\n${goal}\n`;
-    const run: WorkflowRun = {
+    const run: PersistedWorkflowRun = {
       schemaVersion: 1,
       id,
       repositoryPath: path.resolve(input.repositoryPath),
@@ -58,6 +61,7 @@ export class FileRunStore implements RunStore {
       ...(input.model === undefined ? {} : { model: input.model }),
       ...(input.projectProfile === undefined ? {} : { projectProfile: input.projectProfile }),
       stage: INITIAL_WORKFLOW_STAGE,
+      attempt: 1,
       workflowRevision: INITIAL_WORKFLOW_REVISION,
       approvals: [],
       artifacts: [],
@@ -71,7 +75,7 @@ export class FileRunStore implements RunStore {
 
     const runWithRequest = withArtifact(
       run,
-      createArtifactReference('request', requestPath, requestContent, now),
+      createArtifactReference('request', requestPath, requestContent, now, 1),
     );
     await this.#writeAtomic(
       this.#artifactPath(runWithRequest, RUN_METADATA_FILE),
@@ -94,6 +98,14 @@ export class FileRunStore implements RunStore {
         const currentRun = await this.#readUnlocked(validatedRun.id);
         const currentRevision = currentRun.workflowRevision as number;
         const incomingRevision = validatedRun.workflowRevision as number;
+        const incomingAttempt = validatedRun.attempt;
+        const currentAttempt = currentRun.attempt;
+        if (incomingAttempt < currentAttempt) {
+          throw new Error(
+            `Stale run state for "${validatedRun.id}": attempt ${incomingAttempt} ` +
+              `cannot overwrite attempt ${currentAttempt}.`,
+          );
+        }
         if (
           incomingRevision < currentRevision ||
           (incomingRevision === currentRevision && validatedRun.updatedAt < currentRun.updatedAt)
@@ -111,6 +123,103 @@ export class FileRunStore implements RunStore {
 
       return this.#saveUnlocked(validatedRun);
     });
+  }
+
+  async archiveArtifacts(
+    runId: string,
+    fileNames: readonly string[],
+    updatedAt: string,
+  ): Promise<WorkflowRun> {
+    assertValidRunId(runId);
+    return this.#withRunLock(runId, async () => {
+      const run = await this.#readUnlocked(runId);
+      return this.#saveUnlocked(await this.#archiveArtifactsUnlocked(run, fileNames, updatedAt));
+    });
+  }
+
+  async beginRetry(runId: string, options: BeginRetryOptions): Promise<WorkflowRun> {
+    assertValidRunId(runId);
+    return this.#withRunLock(runId, async () => {
+      const run = await this.#readUnlocked(runId);
+      if (run.stage !== 'blocked' && run.stage !== 'failed') {
+        throw new Error(`Run "${runId}" is no longer retryable at stage "${run.stage}".`);
+      }
+      if (run.attempt !== options.expectedAttempt) {
+        throw new Error(
+          `Run "${runId}" attempt changed from ${options.expectedAttempt} to ${run.attempt}.`,
+        );
+      }
+      if (run.workflowRevision !== options.expectedWorkflowRevision) {
+        throw new Error(
+          `Run "${runId}" workflow revision changed from ` +
+            `${options.expectedWorkflowRevision} to ${run.workflowRevision}.`,
+        );
+      }
+      if (run.updatedAt !== options.expectedUpdatedAt) {
+        throw new Error(
+          `Run "${runId}" changed after retry validation; expected ${options.expectedUpdatedAt} ` +
+            `but found ${run.updatedAt}.`,
+        );
+      }
+
+      const archived = await this.#archiveArtifactsUnlocked(
+        run,
+        options.evidenceFileNames,
+        options.updatedAt,
+      );
+      const prepared = prepareRetryWorkflow(archived, options.target, options.updatedAt);
+      return this.#saveUnlocked({
+        ...prepared,
+        attempt: options.expectedAttempt + 1,
+        ...(options.projectProfile === undefined ? {} : { projectProfile: options.projectProfile }),
+        updatedAt: options.updatedAt,
+      });
+    });
+  }
+
+  async #archiveArtifactsUnlocked(
+    initialRun: PersistedWorkflowRun,
+    fileNames: readonly string[],
+    updatedAt: string,
+  ): Promise<WorkflowRun> {
+    let run = initialRun;
+    for (const fileName of new Set(fileNames)) {
+      const artifacts = run.artifacts;
+      const artifact = [...artifacts]
+        .reverse()
+        .find(
+          (candidate) => candidate.fileName === fileName && candidate.supersededAt === undefined,
+        );
+      if (artifact === undefined) {
+        continue;
+      }
+      const content = await readFile(this.#artifactPath(run, artifact.fileName), 'utf8');
+      if (artifact.sha256 !== undefined) {
+        const sha256 = createHash('sha256').update(content).digest('hex');
+        if (sha256 !== artifact.sha256) {
+          throw new Error(`Artifact "${fileName}" has been modified.`);
+        }
+      }
+      // ArtifactReferenceSchema backfills this value for every artifact read by FileRunStore.
+      const artifactAttempt = artifact.attempt as number;
+      const archiveFileName = `attempt-${artifactAttempt}-${fileName}`;
+      const archivePath = this.#artifactPath(run, archiveFileName);
+      await this.#writeAtomic(archivePath, content);
+      const archived = createArtifactReference(
+        artifact.kind,
+        archivePath,
+        content,
+        updatedAt,
+        artifactAttempt,
+        updatedAt,
+      );
+      run = {
+        ...run,
+        artifacts: [...artifacts.filter((candidate) => candidate !== artifact), archived],
+        updatedAt,
+      };
+    }
+    return run;
   }
 
   async transition(
@@ -179,12 +288,12 @@ export class FileRunStore implements RunStore {
     await rename(tempPath, targetPath);
   }
 
-  async #readUnlocked(runId: string): Promise<WorkflowRun> {
+  async #readUnlocked(runId: string): Promise<PersistedWorkflowRun> {
     const content = await readFile(path.join(this.#runsRoot, runId, RUN_METADATA_FILE), 'utf8');
     return parseWorkflowRun(JSON.parse(content));
   }
 
-  async #saveUnlocked(run: WorkflowRun): Promise<WorkflowRun> {
+  async #saveUnlocked(run: WorkflowRun): Promise<PersistedWorkflowRun> {
     const validatedRun = parseWorkflowRun(run);
     await mkdir(this.#runDirectory(validatedRun), { recursive: true });
     await this.#writeAtomic(
@@ -208,6 +317,7 @@ export class FileRunStore implements RunStore {
         artifactPath,
         content,
         createdAt,
+        run.attempt,
       ),
     );
     await this.#saveUnlocked(updatedRun);
@@ -249,7 +359,10 @@ export class FileRunStore implements RunStore {
   }
 }
 
-function withArtifact(run: WorkflowRun, artifact: ArtifactReference): WorkflowRun {
+function withArtifact(
+  run: PersistedWorkflowRun,
+  artifact: ArtifactReference,
+): PersistedWorkflowRun {
   const artifacts = (run.artifacts as readonly ArtifactReference[]).filter(
     (existing) => existing.path !== artifact.path,
   );
@@ -291,12 +404,16 @@ function createArtifactReference(
   artifactPath: string,
   content: string,
   createdAt: string,
+  attempt: number,
+  supersededAt?: string,
 ): ArtifactReference {
   return {
     kind,
     fileName: path.basename(artifactPath),
     path: artifactPath,
     createdAt,
+    attempt,
+    ...(supersededAt === undefined ? {} : { supersededAt }),
     sizeBytes: Buffer.byteLength(content),
     sha256: createHash('sha256').update(content).digest('hex'),
   };

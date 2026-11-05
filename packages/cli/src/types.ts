@@ -8,8 +8,14 @@ export interface RunCommandOptions {
 export interface ApproveCommandOptions {
   readonly gate: 'plan' | 'review';
   readonly action: readonly ('commit' | 'push' | 'merge' | 'pr')[];
+  readonly verification: readonly string[];
   readonly actor?: string;
   readonly note?: string;
+}
+
+export interface RetryCommandOptions {
+  readonly from: 'build' | 'verify';
+  readonly verification: readonly string[];
 }
 
 export interface AdapterInstallCommandOptions {
