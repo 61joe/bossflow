@@ -48,7 +48,8 @@ models:
 BossFlow 将“推理模型”和“Coding Agent 模型”视为两个独立边界：
 
 - 模型档案控制 Product、Tech Lead 和 Reviewer 等推理型 Agent，用于生成 Specification、Technical Plan 和 Review。
-- Build 阶段由 Coding Agent Adapter 执行。当前 Codex Adapter 调用 `codex exec`，使用 Codex CLI 自身配置的模型和认证。
+- Build 阶段由 Coding Agent Adapter 执行。当前 Codex Adapter 拥有 prompt、`codex exec` 进程调用、
+  超时、输出上限和错误归一化，并使用 Codex CLI 自身配置的模型和认证。
 - `bossflow run --profile` 和 `--model` 不会透传给 Codex CLI。模型档案中的 OpenAI-compatible 模型名和 Endpoint 也不保证能被 Codex CLI 使用。
 - `run.json` 中的 `modelProfile` 和 `model` 记录的是 BossFlow 推理模型，不代表实现阶段实际使用的 Coding Agent 模型。
 

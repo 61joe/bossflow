@@ -1,6 +1,13 @@
 import { jest } from '@jest/globals';
 
-const execaMock = jest.fn<() => Promise<Record<string, unknown>>>();
+const execaMock =
+  jest.fn<
+    (
+      command: string,
+      args: readonly string[],
+      options: Record<string, unknown>,
+    ) => Promise<Record<string, unknown>>
+  >();
 
 jest.unstable_mockModule('execa', () => ({
   execa: execaMock,
@@ -9,25 +16,10 @@ jest.unstable_mockModule('execa', () => ({
 const { createCodexWorktreeImplementer } = await import('../index.js');
 
 describe('CodexWorktreeImplementer', () => {
-  it('reports successful coding agent execution', async () => {
+  it('reports successful coding agent execution and keeps approved scope in the prompt', async () => {
     execaMock.mockResolvedValueOnce({ exitCode: 0, stdout: '', stderr: '' });
     const implementer = createCodexWorktreeImplementer();
-    const result = await implementer({
-      runId: 'run-1',
-      repositoryRoot: '/tmp/repository',
-      worktreePath: '/tmp/worktree',
-      baseCommit: 'a'.repeat(40),
-      plan: {
-        schemaVersion: 1,
-        summary: 'Implement.',
-        affectedPaths: ['src'],
-        tasks: [],
-        interfaceChanges: [],
-        risks: [],
-        verificationCommands: [],
-      },
-      approvedPaths: ['src'],
-    });
+    const result = await implementer(implementationContext());
 
     expect(result).toMatchObject({
       status: 'completed',
@@ -36,8 +28,14 @@ describe('CodexWorktreeImplementer', () => {
     expect(execaMock).toHaveBeenCalledWith(
       'codex',
       expect.arrayContaining(['exec', '--ephemeral', '--sandbox', 'workspace-write']),
-      expect.objectContaining({ cwd: '/tmp/worktree', stdin: 'ignore' }),
+      expect.objectContaining({
+        cwd: '/tmp/worktree',
+        stdin: 'ignore',
+        timeout: 1_800_000,
+        maxBuffer: 1_048_576,
+      }),
     );
+    expect(execaMock.mock.calls[0]?.[1].at(-1)).toContain('Approved paths:\n- src');
   });
 
   it('returns blocked evidence for non-zero and thrown coding agent failures', async () => {

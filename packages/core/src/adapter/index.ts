@@ -1,1 +1,8 @@
-export type { AdapterDescriptor, CodingAgentAdapter } from './types.js';
+export type {
+  AdapterDescriptor,
+  CodingAgentAdapter,
+  CodingAgentSkillInstaller,
+  CodingAgentSkillInstallOptions,
+  CodingAgentSkillInstallResult,
+  CodingAgentSkillInstallStatus,
+} from './types.js';

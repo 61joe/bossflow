@@ -1,4 +1,9 @@
-export { CODEX_ADAPTER_ID, CodexAdapter, installCodexSkill } from './codex/index.js';
+export {
+  CODEX_ADAPTER_ID,
+  CodexAdapter,
+  createCodexWorktreeImplementer,
+  installCodexSkill,
+} from './codex/index.js';
 export type {
   CodexSkillInstallOptions,
   CodexSkillInstallResult,

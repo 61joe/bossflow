@@ -44,7 +44,7 @@ packages/
 | 数据契约     | `zod`               | 配置、计划、任务、工具参数和结构化输出的运行时校验                  |
 | CLI          | `commander`         | `run`、`resume`、`approve`、`inspect` 等命令                        |
 | 终端交互     | `@inquirer/prompts` | 初始化、范围确认和人工审批                                          |
-| 子进程       | `execa`             | 执行测试、Lint、构建和受控 Shell 命令                               |
+| 子进程       | `execa`             | Coding Agent、测试、Lint、构建和受控 Shell 命令                     |
 | Git          | `simple-git`        | Git 状态、Diff、分支和 Worktree 操作                                |
 | 文件扫描     | `fast-glob`         | 扫描源码、配置、测试和项目清单                                      |
 | 配置解析     | `yaml`              | 读取 `.bossflow/config.yaml`                                        |
@@ -163,7 +163,7 @@ Codex Skill / CLI ───────→ Adapters
 - `core/tools`：封装 `execa`、`simple-git` 和文件扫描。
 - `core/run-store`：保存 JSON、Markdown 和 YAML，不依赖 Agents SDK。
 - `cli`：负责参数、交互、`dotenv`、终端输出和 Adapter 组合；可以直接组合 Adapter，但不得把具体 Adapter 行为下沉到 Core。
-- `adapters`：负责不同 Coding Agent 的启动方式、上下文转换、Skill 安装和结果回收；不得反向依赖 CLI。
+- `adapters`：负责不同 Coding Agent 的 Implementer、启动方式、prompt、超时和输出限制、上下文转换、Skill 安装和结果回收；不得反向依赖 CLI。
 
 ## 6. 暂缓引入
 

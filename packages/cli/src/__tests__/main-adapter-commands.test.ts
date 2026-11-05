@@ -27,11 +27,13 @@ describe('CLI adapter commands', () => {
     try {
       process.chdir(projectRoot);
       await expect(main(['node', 'bossflow', 'adapter', 'install', 'codex'])).resolves.toBe(0);
-      expect(stdout).toHaveBeenCalledWith(`Installed Codex Skill: ${skillPath}\n`);
+      expect(stdout).toHaveBeenCalledWith(`Installed Codex Desktop integration: ${skillPath}\n`);
       await expect(readFile(skillPath, 'utf8')).resolves.toContain('# BossFlow');
 
       await expect(main(['node', 'bossflow', 'adapter', 'install', 'codex'])).resolves.toBe(0);
-      expect(stdout).toHaveBeenCalledWith(`Codex Skill is already installed: ${skillPath}\n`);
+      expect(stdout).toHaveBeenCalledWith(
+        `Codex Desktop integration is already installed: ${skillPath}\n`,
+      );
     } finally {
       process.chdir(originalCwd);
       stdout.mockRestore();
@@ -53,7 +55,7 @@ describe('CLI adapter commands', () => {
         main(['node', 'bossflow', 'adapter', 'install', 'codex', '--project', projectRoot]),
       ).resolves.toBe(8);
       expect(stderr).toHaveBeenCalledWith(
-        `A different Codex Skill already exists at "${skillPath}".\n`,
+        `A different Codex Desktop integration already exists at "${skillPath}".\n`,
       );
       await expect(readFile(skillPath, 'utf8')).resolves.toBe('custom skill\n');
 
@@ -70,7 +72,7 @@ describe('CLI adapter commands', () => {
         ]),
       ).resolves.toBe(0);
       await expect(readFile(skillPath, 'utf8')).resolves.toContain('# BossFlow');
-      expect(stdout).toHaveBeenCalledWith(`Installed Codex Skill: ${skillPath}\n`);
+      expect(stdout).toHaveBeenCalledWith(`Installed Codex Desktop integration: ${skillPath}\n`);
     } finally {
       stdout.mockRestore();
       stderr.mockRestore();

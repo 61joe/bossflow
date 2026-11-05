@@ -1,7 +1,6 @@
 import { userInfo } from 'node:os';
 import path from 'node:path';
 
-import { installCodexSkill } from '@bossflow/adapters';
 import { FileRunStore, inspectProject } from '@bossflow/core';
 import type { WorkflowRun } from '@bossflow/core';
 
@@ -19,23 +18,40 @@ import { WorkflowCliError } from './error.js';
 import { renderWorkflowStatus } from './renderer.js';
 import { WorkflowService } from './workflow-service.js';
 
-export async function executeAdapterInstall(options: AdapterInstallCommandOptions): Promise<void> {
+export async function executeAdapterInstall(
+  adapterId: string,
+  options: AdapterInstallCommandOptions,
+  registry = createDefaultCodingAgentRegistry(),
+): Promise<void> {
   const projectRoot = path.resolve(options.project ?? process.cwd());
-  const result = await installCodexSkill({
+  if (!registry.has(adapterId)) {
+    throw new WorkflowCliError(
+      `Unsupported Coding Agent adapter "${adapterId}".`,
+      CLI_EXIT_CODES.USAGE_ERROR,
+    );
+  }
+  if (!registry.supportsSkillInstallation(adapterId)) {
+    throw new WorkflowCliError(
+      `Coding Agent adapter "${adapterId}" does not support Skill installation.`,
+      CLI_EXIT_CODES.USAGE_ERROR,
+    );
+  }
+  const adapterName = registry.describe(adapterId).displayName;
+  const result = await registry.installSkill(adapterId, {
     projectRoot,
     ...(options.overwrite === true ? { overwrite: true } : {}),
   });
   if (result.status === 'conflict') {
     throw new WorkflowCliError(
-      `A different Codex Skill already exists at "${result.skillPath}".`,
+      `A different ${adapterName} integration already exists at "${result.skillPath}".`,
       CLI_EXIT_CODES.ADAPTER_CONFLICT,
       'Review the existing Skill, then re-run with --overwrite only if replacement is intended.',
     );
   }
   writeLine(
     result.status === 'already-installed'
-      ? `Codex Skill is already installed: ${result.skillPath}`
-      : `Installed Codex Skill: ${result.skillPath}`,
+      ? `${adapterName} integration is already installed: ${result.skillPath}`
+      : `Installed ${adapterName} integration: ${result.skillPath}`,
   );
 }
 
@@ -173,6 +189,6 @@ function createWorkflowService(
   const runsRoot = path.resolve(projectRoot, config.workflow.runDirectory);
   return new WorkflowService({
     store: new FileRunStore({ runsRoot }),
-    implementer: createDefaultCodingAgentRegistry().create(DEFAULT_CODING_AGENT_ID),
+    implementer: createDefaultCodingAgentRegistry().createImplementer(DEFAULT_CODING_AGENT_ID),
   });
 }

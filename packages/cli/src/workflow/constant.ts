@@ -1,3 +1,5 @@
+import { CODEX_ADAPTER_ID } from '@bossflow/adapters';
+
 export const PLAN_JSON_FILE = 'plan.json';
 export const PLAN_MARKDOWN_FILE = 'plan.md';
 export const REVIEW_JSON_FILE = 'review.json';
@@ -18,4 +20,4 @@ export const CLI_EXIT_CODES = {
   ADAPTER_CONFLICT: 8,
 } as const;
 
-export const DEFAULT_CODING_AGENT_ID = 'codex';
+export const DEFAULT_CODING_AGENT_ID = CODEX_ADAPTER_ID;
