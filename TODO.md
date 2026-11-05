@@ -1,26 +1,5 @@
 # BossFlow TODO
 
-## GitHub Release Automation
-
-- [x] Create a GitHub fine-grained personal access token scoped only to `61joe/bossflow`.
-- [x] Grant the token `Contents: Read and write` and `Pull requests: Read and write`.
-- [x] Add the token as the repository secret `RELEASE_PR_TOKEN` without posting it in chat:
-
-  ```text
-  gh secret set RELEASE_PR_TOKEN --repo 61joe/bossflow
-  ```
-
-- [x] Add a temporary Changeset in a `chore/` PR and merge it to main.
-- [x] Manually trigger the Release PR workflow from `main`:
-
-  ```text
-  gh workflow run release-pr.yml --repo 61joe/bossflow --ref main
-  ```
-
-- [x] Verify the manually triggered Release PR workflow creates or updates the `chore/release` PR.
-- [x] Verify `Branch name policy` and CI run automatically without closing or reopening the release PR.
-- [x] Verify the release PR creates a GitHub Release when merged.
-
 ## npm Registry
 
 - [ ] Decide whether to publish as `@61joe/bossflow-core` and `@61joe/bossflow-cli`, or use the `@bossflow` npm scope.
