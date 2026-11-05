@@ -2,7 +2,8 @@
 
 ## Purpose
 
-TBD - created by archiving change bootstrap-bossflow-baseline. Update Purpose after archive.
+Defines persisted workflow runs, stage transitions, approval gates, isolated implementation,
+verification evidence, review results, and resumable completion behavior.
 
 ## Requirements
 
@@ -113,3 +114,177 @@ recommendations.
 - **AND** it identifies plan recommendations that were not selected for execution
 - **AND** the resulting Review can map acceptance criteria without treating advisory commands as
   mandatory evidence
+
+### Requirement: Generate a structured technical plan
+
+The system SHALL generate and persist a technical plan after the specification stage and before implementation.
+
+#### Scenario: Generate a plan
+
+- **WHEN** a run advances from `spec` to `plan` with valid model credentials
+- **THEN** the system invokes the Tech Lead role with the specification and repository context
+- **AND** validates the result with a plan Schema
+- **AND** writes `plan.json` and a readable `plan.md`
+
+#### Scenario: Reject an invalid plan
+
+- **WHEN** the generated plan lacks tasks, affected paths, verification commands, or risks
+- **THEN** the stage fails
+- **AND** the run remains at `plan`
+- **AND** the failure is recorded without entering implementation
+
+### Requirement: Capture project context before planning
+
+The system SHALL inspect the repository before creating a run and SHALL resolve project context and verification commands into a structured project profile. The persisted project profile commands are authoritative for verification; technical-plan command recommendations MUST NOT replace or expand them implicitly.
+
+#### Scenario: Inspect a supported project
+
+- **WHEN** a user starts a run in a Git repository with a supported package manager
+- **THEN** the system records the repository root, worktree status, package manager, languages, frameworks, conventions, test configuration, package scripts, and resolved verification commands
+- **AND** it reads applicable `AGENTS.md`, README, OpenSpec, and test configuration as bounded planning context
+
+#### Scenario: Require confirmation for ambiguous project commands
+
+- **WHEN** required verification commands cannot be resolved or package metadata is ambiguous
+- **THEN** the system refuses to create the run by default
+- **AND** lists each ambiguity
+- **AND** proceeds only after the user explicitly confirms or configures command overrides
+
+#### Scenario: Keep execution commands anchored to the project profile
+
+- **WHEN** the technical plan recommends verification commands that differ from the persisted project profile
+- **THEN** verification executes the persisted project profile commands
+- **AND** the Review evidence identifies the commands that actually ran
+
+### Requirement: Persist project profile with the run
+
+The system SHALL persist the resolved project profile in `run.json` so later stages and resume operations reuse the same repository context and verification commands.
+
+#### Scenario: Reuse a persisted project profile
+
+- **WHEN** an existing run is read during resume
+- **THEN** its project profile is restored from `run.json`
+- **AND** verification commands do not need to be inferred again
+
+### Requirement: Gate implementation behind plan approval
+
+The system SHALL refuse to create a worktree or modify business files until the user has approved the current specification and plan revision.
+
+#### Scenario: Require plan approval
+
+- **WHEN** a plan is complete but has not been approved
+- **THEN** the run can advance only to the approval gate
+- **AND** Build actions are rejected
+
+#### Scenario: Record approval
+
+- **WHEN** the user approves the current spec and plan revision
+- **THEN** the system records the approval decision, timestamp, user, and approved revision in run metadata
+
+#### Scenario: Reject stale approval
+
+- **WHEN** the plan changes after approval
+- **THEN** the previous plan approval no longer authorizes Build
+
+### Requirement: Isolate implementation in a Git worktree
+
+The system SHALL perform implementation and verification in a dedicated Git worktree rather than the main working tree.
+
+#### Scenario: Create an implementation worktree
+
+- **WHEN** an approved plan enters `build`
+- **THEN** the system creates or reuses an idempotent worktree for the run
+- **AND** records the worktree path, base commit, and branch in run metadata
+
+#### Scenario: Preserve the main worktree
+
+- **WHEN** the Implementer changes files
+- **THEN** those changes appear only in the run worktree
+- **AND** the configured main working tree remains unchanged
+- **AND** the main branch HEAD, index, and tracked file content remain unchanged until an explicitly approved external action
+
+#### Scenario: Reject a dirty main worktree
+
+- **WHEN** worktree creation uses the default dirty strategy and the main worktree has uncommitted changes
+- **THEN** the system rejects worktree creation
+- **AND** reports that the user must commit or stash before continuing
+
+#### Scenario: Clean up a retained worktree
+
+- **WHEN** the user explicitly requests cleanup
+- **THEN** the system removes the registered worktree and optionally deletes its branch
+- **AND** marks the persisted worktree metadata as cleaned with a cleanup timestamp
+
+#### Scenario: Detect orphaned managed directories
+
+- **WHEN** the managed worktree root contains directories that are not registered Git worktrees
+- **THEN** the system reports those directories as orphans
+- **AND** does not delete them automatically
+
+#### Scenario: Reject out-of-scope paths
+
+- **WHEN** the implementation diff changes a path outside the approved task scope
+- **THEN** the stage is marked blocked
+- **AND** the unexpected paths are recorded for user review
+
+### Requirement: Verify with real command evidence
+
+The system SHALL execute configured lint, typecheck, test, and build commands and persist their real exit status and bounded output.
+
+#### Scenario: Capture successful verification
+
+- **WHEN** all configured verification commands exit successfully
+- **THEN** `verification.json` and `verification.md` record each command, duration, and successful exit code
+
+#### Scenario: Stop on command failure
+
+- **WHEN** a required verification command exits non-zero
+- **THEN** Review is not entered automatically
+- **AND** the run is marked blocked or failed with the failing command and bounded output
+
+#### Scenario: Redact command output
+
+- **WHEN** command output contains an environment secret or credential
+- **THEN** the persisted evidence redacts the secret value
+
+### Requirement: Produce independent review and requirement mapping
+
+The system SHALL invoke a Reviewer role independently from the Implementer and SHALL map specification acceptance criteria to implementation and verification evidence.
+
+#### Scenario: Generate review findings
+
+- **WHEN** verification evidence is available
+- **THEN** the Reviewer receives the specification, approved plan, diff summary, and verification results
+- **AND** writes structured review findings and a requirement coverage map
+
+#### Scenario: Block on unresolved high-severity findings
+
+- **WHEN** review contains an unresolved high-severity finding
+- **THEN** the run cannot enter the final review approval gate as complete
+- **AND** the finding is surfaced to the user
+
+### Requirement: Summarize and resume workflow state
+
+The system SHALL persist a final summary and SHALL allow an interrupted run to resume from its last completed stage without repeating completed side effects.
+
+#### Scenario: Produce a final summary
+
+- **WHEN** Review and required gates are complete
+- **THEN** `summary.md` lists completed work, artifacts, verification evidence, review findings, remaining risks, and pending external actions
+
+#### Scenario: Resume an interrupted run
+
+- **WHEN** the user resumes a non-terminal run
+- **THEN** the system reloads persisted state and continues from the first incomplete stage
+- **AND** completed commands and worktree creation are not duplicated
+
+#### Scenario: Resume completed implementation
+
+- **WHEN** a run already has `implementation.json`
+- **THEN** the system reuses the persisted implementation result
+- **AND** does not invoke the Implementer again
+
+#### Scenario: Preserve terminal failures
+
+- **WHEN** a run is failed, blocked, or awaiting approval
+- **THEN** status inspection identifies the exact stage, reason, and required user action

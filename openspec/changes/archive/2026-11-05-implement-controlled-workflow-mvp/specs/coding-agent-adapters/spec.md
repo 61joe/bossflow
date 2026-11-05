@@ -4,7 +4,7 @@
 
 The system SHALL provide an installable Codex Skill that starts the controlled workflow, reads persisted run state, and enforces the same stage and approval boundaries as the CLI.
 
-#### Scenario: Install the Codex Skill
+#### Scenario: Install the Codex Skill template
 
 - **WHEN** the user requests Codex integration installation
 - **THEN** the adapter installs the `bossflow` Skill into the target project's supported Codex Skill location
@@ -16,11 +16,7 @@ The system SHALL provide an installable Codex Skill that starts the controlled w
 - **THEN** the Skill resolves repository context, configuration, and credentials
 - **AND** creates or resumes a persisted run according to the workflow state
 
-### Requirement: Report an unsupported final workflow stage
-
-The system SHALL report the actual persisted workflow stage, pending approval, failures, and incomplete actions without claiming later stages are complete.
-
-#### Scenario: Report the current workflow stage
+#### Scenario: Report an unsupported final workflow stage
 
 - **WHEN** a Codex conversation inspects a run with incomplete Build, Verify, or Review work
 - **THEN** the Skill reports the first incomplete stage and required next action
