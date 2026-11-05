@@ -2,7 +2,8 @@
 
 ## Purpose
 
-TBD - created by archiving change bootstrap-bossflow-baseline. Update Purpose after archive.
+Defines named reasoning-model profiles, provider compatibility, credential resolution, and safe
+configuration boundaries for BossFlow agents.
 
 ## Requirements
 

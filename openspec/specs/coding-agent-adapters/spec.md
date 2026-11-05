@@ -2,7 +2,8 @@
 
 ## Purpose
 
-TBD - created by archiving change bootstrap-bossflow-baseline. Update Purpose after archive.
+Defines the stable boundaries through which BossFlow discovers Coding Agent integrations, installs
+their entrypoints, and preserves workflow stage and approval controls.
 
 ## Requirements
 
@@ -17,15 +18,27 @@ The system SHALL expose a stable descriptor for each supported Coding Agent adap
 
 ### Requirement: Provide a standalone Codex workflow entrypoint
 
-The system SHALL package a Codex Skill template that starts the BossFlow workflow, checks configuration and credentials, and enforces approval boundaries.
+The system SHALL provide an installable Codex Skill that starts the controlled workflow, reads persisted run state, and enforces the same stage and approval boundaries as the CLI.
 
 #### Scenario: Install the Codex Skill template
 
-- **WHEN** the adapter package is inspected or distributed
-- **THEN** it includes a `bossflow` Skill template under its Codex assets
-- **AND** the template instructs the agent to avoid exposing API keys and avoid unapproved external side effects
+- **WHEN** the user requests Codex integration installation
+- **THEN** the adapter installs the `bossflow` Skill into the target project's supported Codex Skill location
+- **AND** does not overwrite an unrelated Skill with the same name without confirmation
+
+#### Scenario: Start a workflow from Codex
+
+- **WHEN** the user invokes `$bossflow` with a goal
+- **THEN** the Skill resolves repository context, configuration, and credentials
+- **AND** creates or resumes a persisted run according to the workflow state
 
 #### Scenario: Report an unsupported final workflow stage
 
-- **WHEN** the current scaffold has only implemented specification generation
-- **THEN** the Skill instructions require the agent to report later stages as incomplete rather than claim them as completed
+- **WHEN** a Codex conversation inspects a run with incomplete Build, Verify, or Review work
+- **THEN** the Skill reports the first incomplete stage and required next action
+- **AND** does not describe the workflow as completed
+
+#### Scenario: Preserve approval boundaries in Codex
+
+- **WHEN** a run has not recorded plan approval or external-action approval
+- **THEN** the Skill does not modify business code or perform the external Git action

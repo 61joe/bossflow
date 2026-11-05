@@ -10,11 +10,17 @@ The system SHALL expose its supported commands through the top-level CLI help an
 - **THEN** the process exits with code 0
 - **AND** the output lists `doctor`, `init`, `run`, `status`, `approve`, `resume`, `adapter`, `model`, and `auth`
 
+#### Scenario: Display version
+
+- **WHEN** the user executes `bossflow --version`
+- **THEN** the process exits with code 0
+- **AND** the output contains the CLI version
+
 ### Requirement: Generate a specification run
 
 The system SHALL create a persisted run, generate a validated specification, generate a technical plan, and stop at the plan-approval gate by default. The system MUST preserve specification-only execution through an explicit `--stop-after spec` option.
 
-#### Scenario: Generate specification and plan
+#### Scenario: Generate a specification
 
 - **WHEN** the user runs `bossflow run "<goal>" --profile <profile>` with a valid model credential
 - **THEN** the command creates `.bossflow/runs/<run-id>/request.md` and `run.json`
