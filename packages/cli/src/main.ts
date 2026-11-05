@@ -1,6 +1,5 @@
 import { password } from '@inquirer/prompts';
 import { Command, CommanderError, InvalidArgumentError } from 'commander';
-import { CODEX_ADAPTER_ID } from '@bossflow/adapters';
 import { APPROVAL_ACTIONS, probeModelRuntime } from '@bossflow/core';
 import type { ApprovalAction } from '@bossflow/core';
 
@@ -161,14 +160,11 @@ function registerAdapterCommands(program: Command): void {
   adapterCommand
     .command('install')
     .description('Install a Coding Agent integration into a project.')
-    .argument('<adapter>', 'adapter identifier: codex')
+    .argument('<adapter>', 'Coding Agent adapter identifier')
     .option('--project <path>', 'target project root; defaults to the current directory')
-    .option('--overwrite', 'replace a different existing Codex Skill after confirmation')
+    .option('--overwrite', 'replace a conflicting integration after confirmation')
     .action(async (adapterId: string, options: AdapterInstallCommandOptions) => {
-      if (adapterId !== CODEX_ADAPTER_ID) {
-        throw new InvalidArgumentError(`Unsupported Coding Agent adapter "${adapterId}".`);
-      }
-      await executeAdapterInstall(options);
+      await executeAdapterInstall(adapterId, options);
     });
 }
 

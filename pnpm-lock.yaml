@@ -220,6 +220,9 @@ importers:
       '@bossflow/core':
         specifier: workspace:*
         version: link:../core
+      execa:
+        specifier: ^10.2.1
+        version: 10.2.1
 
   packages/cli:
     dependencies:
@@ -238,9 +241,6 @@ importers:
       dotenv:
         specifier: ^18.0.9
         version: 18.0.9
-      execa:
-        specifier: ^10.2.1
-        version: 10.2.1
       pino:
         specifier: ^10.4.0
         version: 10.4.0

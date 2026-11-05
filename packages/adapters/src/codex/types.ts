@@ -1,13 +1,9 @@
-export type CodexSkillInstallStatus =
-  'installed' | 'already-installed' | 'conflict' | 'overwritten';
+import type {
+  CodingAgentSkillInstallOptions,
+  CodingAgentSkillInstallResult,
+  CodingAgentSkillInstallStatus,
+} from '@bossflow/core';
 
-export interface CodexSkillInstallOptions {
-  readonly projectRoot: string;
-  /** Replace an existing, different SKILL.md only after explicit user confirmation. */
-  readonly overwrite?: boolean;
-}
-
-export interface CodexSkillInstallResult {
-  readonly status: CodexSkillInstallStatus;
-  readonly skillPath: string;
-}
+export type CodexSkillInstallStatus = CodingAgentSkillInstallStatus;
+export type CodexSkillInstallOptions = CodingAgentSkillInstallOptions;
+export type CodexSkillInstallResult = CodingAgentSkillInstallResult;

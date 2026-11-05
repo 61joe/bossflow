@@ -22,6 +22,15 @@ BossFlow 默认在源仓库同级创建：
 
 执行前后会比较主工作区的 Git 状态、HEAD 和分支指纹，任何变化都会使实现失败。
 
+## Coding Agent Adapter
+
+Build 使用的 Worktree Implementer 由当前选择的 Coding Agent Adapter 创建。CLI 只负责选择
+Adapter 和构造工作流；Codex prompt、`codex exec` 参数、`stdin`、超时、输出上限、取消信号和
+失败脱敏都在 `packages/adapters/src/codex` 中实现。
+
+Adapter 不推进阶段、不修改审批记录，也不执行 commit、push、merge 或 PR。Workflow、Worktree、
+路径范围、验证、Review 和持久化仍由 BossFlow Core 与 CLI 组合控制。
+
 ## 变更与证据
 
 实现完成后，系统收集：

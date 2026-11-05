@@ -1,7 +1,7 @@
 import { CodexAdapter } from '../index.js';
 
 describe('CodexAdapter', () => {
-  it('describes the Codex invocation boundary', () => {
+  it('exposes Codex execution and installation capabilities', () => {
     const adapter = new CodexAdapter();
 
     expect(adapter.describe()).toEqual({
@@ -9,5 +9,7 @@ describe('CodexAdapter', () => {
       displayName: 'Codex Desktop',
       invocation: '$bossflow',
     });
+    expect(adapter.createWorktreeImplementer()).toEqual(expect.any(Function));
+    expect(adapter.installSkill).toEqual(expect.any(Function));
   });
 });

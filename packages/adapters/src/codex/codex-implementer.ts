@@ -1,12 +1,17 @@
 import { execa } from 'execa';
 
-import type { ImplementationResult } from '@bossflow/core';
+import type {
+  ImplementationResult,
+  WorktreeImplementer,
+  WorktreeImplementerContext,
+} from '@bossflow/core';
 import { redactText } from '@bossflow/core';
-import type { WorktreeImplementer, WorktreeImplementerContext } from '@bossflow/core';
 
-const CODEX_IMPLEMENTATION_TIMEOUT_MS = 30 * 60 * 1_000;
-const CODEX_MAX_OUTPUT_BYTES = 1024 * 1024;
-const MAX_FAILURE_DETAIL_CHARS = 4_000;
+import {
+  CODEX_IMPLEMENTATION_TIMEOUT_MS,
+  CODEX_MAX_FAILURE_DETAIL_CHARS,
+  CODEX_MAX_OUTPUT_BYTES,
+} from './constant.js';
 
 export function createCodexWorktreeImplementer(): WorktreeImplementer {
   return async (context: WorktreeImplementerContext): Promise<ImplementationResult> => {
@@ -74,7 +79,7 @@ function blockedResult(
     details
       .filter((detail): detail is string => detail !== undefined && detail.trim().length > 0)
       .join('\n')
-      .slice(0, MAX_FAILURE_DETAIL_CHARS),
+      .slice(0, CODEX_MAX_FAILURE_DETAIL_CHARS),
   );
   return {
     schemaVersion: 1,

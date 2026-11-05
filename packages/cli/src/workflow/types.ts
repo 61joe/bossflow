@@ -34,8 +34,6 @@ export interface WorkflowServiceOptions {
   readonly createId?: () => string;
 }
 
-export type CodingAgentImplementerFactory = () => WorktreeImplementer;
-
 export interface RunWorkflowOptions {
   readonly goal: string;
   readonly projectContext: ProjectContextBundle;

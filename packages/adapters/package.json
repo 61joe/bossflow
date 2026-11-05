@@ -20,6 +20,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@bossflow/core": "workspace:*"
+    "@bossflow/core": "workspace:*",
+    "execa": "^10.2.1"
   }
 }

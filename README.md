@@ -282,15 +282,15 @@ Artifact 带有 SHA-256 校验；被修改的产物不会用于恢复。输出�
 
 ## 项目结构
 
-| 路径                | 说明                                                                          |
-| ------------------- | ----------------------------------------------------------------------------- |
-| `packages/core`     | 工作流状态机、Agent、契约、Run Store、Verification、Review 和 Worktree 管理。 |
-| `packages/adapters` | Coding Agent Adapter 边界与 Codex Skill 安装能力。                            |
-| `packages/cli`      | `bossflow` 命令、参数解析、模型/凭据管理和工作流组合。                        |
-| `openspec/specs`    | 已生效的行为契约。                                                            |
-| `openspec/changes`  | 进行中的 OpenSpec 变更与已归档历史。                                          |
-| `docs`              | 产品、配置、架构、测试、贡献和发布文档。                                      |
-| `tests/integration` | 跨包集成测试，不访问真实模型或网络。                                          |
+| 路径                | 说明                                                                             |
+| ------------------- | -------------------------------------------------------------------------------- |
+| `packages/core`     | 工作流状态机、Agent、契约、Run Store、Verification、Review 和 Worktree 管理。    |
+| `packages/adapters` | Coding Agent 实现、Codex prompt/process、Skill 安装和 Adapter capability。       |
+| `packages/cli`      | `bossflow` 命令、参数解析、模型/凭据管理和 Adapter 组合，不包含 Codex 执行逻辑。 |
+| `openspec/specs`    | 已生效的行为契约。                                                               |
+| `openspec/changes`  | 进行中的 OpenSpec 变更与已归档历史。                                             |
+| `docs`              | 产品、配置、架构、测试、贡献和发布文档。                                         |
+| `tests/integration` | 跨包集成测试，不访问真实模型或网络。                                             |
 
 依赖方向保持单向：
 

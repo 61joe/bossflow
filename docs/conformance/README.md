@@ -27,7 +27,7 @@ All three reports:
   command output.
 
 The campaign also identified and fixed a real adapter defect: `codex exec` waited for open stdin when
-launched through `execa`. The Codex implementer now sets `stdin: 'ignore'`.
+launched through `execa`. The adapter-owned Codex implementer now sets `stdin: 'ignore'`.
 
 ## Limitations
 
