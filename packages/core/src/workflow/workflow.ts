@@ -52,6 +52,26 @@ export function transitionWorkflow(
   };
 }
 
+export function prepareRetryWorkflow(
+  run: WorkflowRun,
+  target: 'build' | 'verify',
+  updatedAt: string,
+): WorkflowRun {
+  if (run.stage !== 'blocked' && run.stage !== 'failed') {
+    throw new Error(`Retry requires a blocked or failed stage; current stage is "${run.stage}".`);
+  }
+  const { failure: _failure, ...runWithoutFailure } = run;
+  void _failure;
+  return {
+    ...runWithoutFailure,
+    stage: target,
+    workflowRevision: (run.workflowRevision ?? 1) + 1,
+    approvals: run.approvals ?? [],
+    artifacts: run.artifacts ?? [],
+    updatedAt,
+  };
+}
+
 function getTransitionRejection(
   run: WorkflowRun,
   to: WorkflowStage,
@@ -95,7 +115,9 @@ function hasCurrentApproval(run: WorkflowRun, gate: ApprovalGate): boolean {
       .reverse()
       .find(
         (candidate) =>
-          candidate.kind === artifactKind && candidate.fileName === approval.artifactFileName,
+          candidate.kind === artifactKind &&
+          candidate.fileName === approval.artifactFileName &&
+          candidate.supersededAt === undefined,
       );
     return artifact?.sha256 !== undefined && artifact.sha256 === approval.artifactSha256;
   }

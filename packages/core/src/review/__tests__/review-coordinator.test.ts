@@ -1,4 +1,4 @@
-/* eslint-disable max-lines, complexity -- Review scenarios share one artifact fixture with many optional branches. */
+/* eslint-disable max-lines, max-lines-per-function, complexity -- Review scenarios share one artifact fixture with many optional branches. */
 import { jest } from '@jest/globals';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -415,6 +415,38 @@ describe('ReviewCoordinator incomplete coverage', () => {
 });
 
 describe('ReviewCoordinator recovery', () => {
+  it('ignores superseded Review and Summary evidence during a retry attempt', async () => {
+    const fixture = await reviewRun();
+    const reviewer = jest.fn(async () => REVIEW);
+    const coordinator = new ReviewCoordinator({
+      store: fixture.store,
+      reviewer,
+    });
+
+    try {
+      await coordinator.review({ runId: fixture.run.id });
+      const completed = await fixture.store.read(fixture.run.id);
+      const retry = await fixture.store.save({
+        ...completed,
+        stage: 'review',
+        attempt: 2,
+        updatedAt: new Date(Date.parse(completed.updatedAt) + 1_000).toISOString(),
+      });
+      await fixture.store.archiveArtifacts(
+        retry.id,
+        ['review.json', 'review.md', 'summary.json', 'summary.md'],
+        new Date(Date.parse(retry.updatedAt) + 1_000).toISOString(),
+      );
+
+      await expect(coordinator.review({ runId: fixture.run.id })).resolves.toMatchObject({
+        status: 'ready-for-approval',
+      });
+      expect(reviewer).toHaveBeenCalledTimes(2);
+    } finally {
+      await fixture.cleanup();
+    }
+  });
+
   it('rejects modified, missing, or invalid review inputs', async () => {
     const fixture = await reviewRun();
     const coordinator = new ReviewCoordinator({

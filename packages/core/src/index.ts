@@ -6,6 +6,7 @@ export * from './models/index.js';
 export * from './project-context/index.js';
 export * from './redaction/index.js';
 export * from './review/index.js';
+export * from './retry/index.js';
 export * from './run-store/index.js';
 export * from './verification/index.js';
 export * from './workflow/index.js';

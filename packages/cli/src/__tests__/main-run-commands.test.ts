@@ -188,6 +188,7 @@ describe('CLI run command', () => {
       expect(stdout).toHaveBeenCalledWith(
         `Plan approval required: bossflow approve ${savedRun.id} --gate plan\n`,
       );
+      expect(stdout).toHaveBeenCalledWith(expect.stringMatching(/^Run readiness: /));
     } finally {
       process.chdir(originalCwd);
       if (originalOpenAiKey === undefined) {

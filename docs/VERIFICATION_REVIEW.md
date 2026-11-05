@@ -46,6 +46,11 @@ Reviewer 还会收到明确的 verification context：
 - `advisoryPlanCommands`：Plan 建议但未被项目 profile 选中的检查。
 - `missingRequiredCommandIds`：缺少真实证据的 authoritative required 命令。
 
+Plan 建议的验证命令默认仍是 advisory。用户可以在 Plan approval 时通过重复的
+`--verification <id>` 显式采纳当前 Plan 中的命令。采纳结果与当前 Plan 哈希绑定，并追加到
+Run 的 authoritative verification set；未采纳的命令不会执行。采纳不会改变无 Shell 参数数组、
+超时限制和 Worktree 内 `cwd` 校验。
+
 缺少 required 证据时系统自动增加 P1 finding；Reviewer 的命令相关 finding 必须关联
 `verificationCommandId`。系统会把关联 advisory 命令的 P0/P1 确定性降级为 P3，因此
 advisory 未执行不能单独阻断流程。

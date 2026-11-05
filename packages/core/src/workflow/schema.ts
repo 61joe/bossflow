@@ -9,7 +9,7 @@ import {
 } from '../contracts/index.js';
 import { ProjectProfileSchema } from '../project-context/index.js';
 import { INITIAL_WORKFLOW_REVISION, WORKFLOW_SCHEMA_VERSION, WORKFLOW_STAGES } from './constant.js';
-import type { WorkflowRun } from './types.js';
+import type { PersistedWorkflowRun } from './types.js';
 
 const TimestampSchema = z.iso.datetime();
 const NonEmptyStringSchema = z.string().trim().min(1);
@@ -24,6 +24,7 @@ export const WorkflowRunSchema = z
     model: NonEmptyStringSchema.optional(),
     projectProfile: ProjectProfileSchema.optional(),
     stage: z.enum(WORKFLOW_STAGES),
+    attempt: z.number().int().positive().default(1),
     workflowRevision: z.number().int().positive().default(INITIAL_WORKFLOW_REVISION),
     approvals: z.array(ApprovalRecordSchema).default([]),
     worktree: WorktreeMetadataSchema.optional(),
@@ -34,6 +35,7 @@ export const WorkflowRunSchema = z
   })
   .strict();
 
-export function parseWorkflowRun(value: unknown): WorkflowRun {
-  return WorkflowRunSchema.parse(value);
+export function parseWorkflowRun(value: unknown): PersistedWorkflowRun {
+  // WorkflowRunSchema applies defaults for attempt, revision, approvals, and artifacts.
+  return WorkflowRunSchema.parse(value) as PersistedWorkflowRun;
 }

@@ -9,7 +9,6 @@ describe('WorkflowService legacy optional metadata', () => {
     const store = new BareRunStore({
       stage: 'plan_approval',
       approvals: undefined,
-      artifacts: undefined,
       workflowRevision: undefined,
     });
     const service = createService(store);
@@ -76,6 +75,24 @@ describe('WorkflowService legacy optional metadata', () => {
       ]),
     );
   });
+
+  it('reports a clear error when a custom Run Store lacks atomic retry support', async () => {
+    const store = new BareRunStore({ stage: 'blocked' });
+    const service = createService(store);
+
+    expect((await service.status('run-1')).nextAction).toContain('cannot prepare a guarded retry');
+    await expect(
+      service.retry({
+        runId: 'run-1',
+        from: 'build',
+        modelRuntime: {
+          provider: {},
+          structuredOutputMode: 'native',
+        } as unknown as ModelRuntime,
+        redactionSecrets: [],
+      }),
+    ).rejects.toMatchObject({ exitCode: CLI_EXIT_CODES.USAGE_ERROR });
+  });
 });
 
 function createService(store: RunStore): WorkflowService {
@@ -114,6 +131,7 @@ function createArtifact(fileName: string, kind: 'plan' | 'review'): ArtifactRefe
     fileName,
     path: `/tmp/project/${fileName}`,
     createdAt: '2026-11-03T00:00:00.000Z',
+    attempt: 1,
     sha256: createHash('sha256').update('{}').digest('hex'),
   };
 }

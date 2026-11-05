@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function -- Recovery scenarios share one implementation fixture. */
 import { jest } from '@jest/globals';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -49,6 +50,8 @@ describe('ImplementationCoordinator recovery integrity', () => {
       goal: 'Legacy run',
       modelProfile: 'openai',
       stage: 'plan_approval',
+      attempt: 1,
+      artifacts: [],
       createdAt: NOW,
       updatedAt: NOW,
     };
@@ -167,6 +170,45 @@ describe('ImplementationCoordinator recovery validation', () => {
 });
 
 describe('ImplementationCoordinator recovery transitions', () => {
+  it('ignores superseded implementation evidence during a retry attempt', async () => {
+    const fixture = await createApprovedRun();
+    const workspace = new FakeWorkspace();
+    const coordinator = new ImplementationCoordinator({
+      store: fixture.store,
+      worktreeManager: workspace,
+    });
+    const implementer = jest.fn(async () => RESULT);
+
+    try {
+      await coordinator.execute({
+        runId: fixture.run.id,
+        implementer,
+      });
+      const completed = await fixture.store.read(fixture.run.id);
+      const retry = await fixture.store.save({
+        ...completed,
+        stage: 'build',
+        attempt: 2,
+        updatedAt: new Date(Date.parse(completed.updatedAt) + 1_000).toISOString(),
+      });
+      await fixture.store.archiveArtifacts(
+        retry.id,
+        ['implementation.json', 'implementation.md', 'implementation.patch'],
+        new Date(Date.parse(retry.updatedAt) + 1_000).toISOString(),
+      );
+
+      await expect(
+        coordinator.execute({
+          runId: fixture.run.id,
+          implementer,
+        }),
+      ).resolves.toMatchObject({ status: 'implemented' });
+      expect(implementer).toHaveBeenCalledTimes(2);
+    } finally {
+      await fixture.cleanup();
+    }
+  });
+
   it('rejects an artifact that cannot recover the current stage', async () => {
     const fixture = await createApprovedRun();
     const coordinator = new ImplementationCoordinator({

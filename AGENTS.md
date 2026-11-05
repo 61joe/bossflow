@@ -1,20 +1,103 @@
 # BossFlow Agent Instructions
 
-## 必读文档
+These instructions apply to the entire repository. Follow more specific `AGENTS.md` files in
+subdirectories when present.
 
-在修改代码前阅读：
+## Required Context
+
+Before modifying code, read:
 
 - `docs/PRD.md`
 - `docs/TECH_STACK.md`
 - `docs/TS_STYLE_GUIDE.md`
+- `docs/MODEL_CONFIGURATION.md`
 
-若文档冲突，先解决冲突再实现。
+Read the relevant workflow documents for the affected area:
 
-行为变更还必须检查 `openspec/specs/`，并通过 OpenSpec change 描述 proposal、spec delta 和任务。实现完成后运行 `pnpm spec:validate`。
+- CLI and stages: `docs/CLI_WORKFLOW.md`
+- Worktree and implementation: `docs/WORKTREE_IMPLEMENTATION.md`
+- Verification and Review: `docs/VERIFICATION_REVIEW.md`
+- Project detection and commands: `docs/PROJECT_CONTEXT.md`
+- Contribution, branches, and releases: `docs/CONTRIBUTING.md`, `docs/RELEASE.md`
 
-## 工程命令
+If documents conflict, resolve the conflict before implementation.
 
-提交前运行：
+## Technology Baseline
+
+- Node.js 24+ and pnpm 12+
+- TypeScript 6 with ESM and NodeNext
+- OpenAI Agents SDK JS and Zod
+- Commander, Jest, ESLint, and Prettier
+- Codex is the first Coding Agent adapter, not a Core dependency
+
+## Repository Architecture
+
+```text
+packages/
+├── core/       # Workflow, contracts, stores, Git, verification, Review
+├── adapters/   # Concrete Coding Agent integrations
+└── cli/        # Commands, composition, and user-facing orchestration
+```
+
+Dependency direction:
+
+```text
+cli ──→ adapters ──→ core
+└──────────────────→ core
+```
+
+- Core must not import CLI or a concrete adapter.
+- Adapters must not import CLI.
+- CLI may compose Core and Adapters.
+- CLI owns user-facing exit codes, prompts, rendering, and composition.
+- Adapter execution details, prompts, process limits, and provider-specific failure normalization
+  belong under `packages/adapters`.
+
+## Security And Runtime Safety
+
+- Never write API keys into `.bossflow/config.yaml`, CLI arguments, logs, chat output, or Run
+  artifacts.
+- Manage local credentials only through `bossflow auth`.
+- `.bossflow/credentials.local.yaml` must remain Git-ignored with mode `0600`.
+- Redact secrets before persisting command output, diagnostics, diffs, Review results, and summaries.
+- Execute Shell commands with executable plus argument arrays; do not use shell-string execution.
+- Validate all paths and keep implementation writes inside the approved Worktree scope.
+- Do not infer success from changed files. A Coding Agent completion requires a trustworthy process
+  result and explicit evidence.
+- Do not edit hashed Review, Verification, Summary, or implementation artifacts to remove findings.
+- Do not manually rewrite terminal Run state. Use status, evidence, and controlled Retry.
+- External Git actions require explicit user authorization for the exact actions requested.
+
+## Run State And Evidence
+
+- Persisted Run artifacts are the source of truth; chat history is not.
+- Never describe `plan_approval`, `review_approval`, `blocked`, or `failed` as completed.
+- Only `run.json.stage === "completed"` permits a completed-workflow claim.
+- Preserve superseded evidence as `attempt-<n>-*`.
+- Use active, non-superseded artifacts for current-stage recovery and approval.
+- Keep Retry preparation atomic and reject stale stage, attempt, revision, or updatedAt values.
+- Approval records must reference the current artifact revision and SHA-256.
+
+## OpenSpec
+
+Behavior changes require an OpenSpec change containing the applicable proposal, spec delta, design,
+and tasks:
+
+```text
+pnpm spec:list
+pnpm spec:validate
+```
+
+- Inspect existing capabilities under `openspec/specs/` before proposing a new one.
+- Reuse existing capability paths when requirements change.
+- Implement behavior through an OpenSpec apply workflow.
+- Archive a change only after implementation, verification, Review, and explicit human acceptance.
+- Do not invent spec deltas solely to satisfy validation; pure refactors should not change runtime
+  behavior.
+
+## Required Commands
+
+Before committing, run:
 
 ```text
 pnpm format:check
@@ -25,30 +108,33 @@ pnpm build
 pnpm spec:validate
 ```
 
-快速全量检查使用 `pnpm check`。
+Use `pnpm check` for format, lint, typecheck, tests, and build, then run `pnpm spec:validate`
+separately.
 
-## 必须遵守
+Run real Codex conformance only when the change affects adapter execution, process handling, or end
+to end workflow behavior:
 
-- TypeScript 使用 ESM 和 NodeNext，相对导入带 `.js` 扩展名。
-- 测试放在同级 `__tests__/`，不得与源码平级。
-- 导出的 `type` 和 `interface` 放在模块 `types.ts`，经 `index.ts` 导出。
-- 可复用的业务字面量放在模块 `constant.ts`。
-- 跨模块引用只能经过公共 `index.ts`；模块内部实现可以按依赖关系直接引用。
-- 不直接引用其他包的 `src`、`types.ts` 或 `constant.ts`。
-- 外部输入必须通过 Zod 校验。
-- `pnpm test` 必须运行 coverage；statements、branches、functions 和 lines 均为 100% 硬门禁。
-- 不在模块导入阶段读取环境变量或产生持久副作用。
-- API Key 不得写入 `.bossflow/config.yaml`、CLI 参数、日志或运行产物。
-- 本地凭据只能通过 `bossflow auth` 管理，并保持 `0600` 和 Git 忽略。
-- 不得绕过 Husky 或使用 `--no-verify`，除非用户明确要求。
-- 不得直接提交或推送 `main`、`master`；从 `feat-`、`fix-` 或 `chore-` 分支创建 PR。
-- 合并 PR 前必须通过 `Branch name policy`；质量 CI 可以运行，但不作为合并门禁。
-- 需要发布的行为变更必须提交 Changesets 文件；不得从普通功能 PR 直接创建 Release。
-- 未经明确授权不执行提交、推送、合并或创建 PR。
+```text
+pnpm conformance:codex -- --scenario <scenario-id>
+```
 
-## 完成标准
+Conformance evidence must remain sanitized and describe the actual outcome. Do not report a blocked
+run as successful.
 
-- 行为变更伴有测试。
-- 类型检查、Lint、格式、Jest 和构建通过。
-- 运行产物与文档协议保持兼容。
-- 最终汇报列出实际修改、验证命令和未完成事项。
+## Git And Release
+
+- Do not commit, push, merge, or create a PR unless the user explicitly authorizes the exact action.
+- Do not work directly on `main` or `master`.
+- Use `feat-`, `fix-`, or `chore-` branch names.
+- Do not bypass Husky or use `--no-verify` unless explicitly requested.
+- Use Changesets for release-impacting behavior and public package changes.
+- Do not create a Release from a feature PR.
+
+## Completion Checklist
+
+- Behavior matches the approved specification and Plan.
+- Tests cover success, failure, cancellation, boundary, and recovery paths.
+- Security and artifact-redaction requirements are preserved.
+- Full required commands pass.
+- Final report lists actual changes, verification commands and results, residual warnings, and
+  unfinished work.

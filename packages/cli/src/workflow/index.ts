@@ -7,6 +7,7 @@ export { renderRepositoryContext, renderTechnicalPlan, renderWorkflowStatus } fr
 export { WorkflowService } from './workflow-service.js';
 export type {
   ApproveWorkflowOptions,
+  RetryWorkflowOptions,
   ResumeWorkflowOptions,
   RunWorkflowOptions,
   RunWorkflowResult,

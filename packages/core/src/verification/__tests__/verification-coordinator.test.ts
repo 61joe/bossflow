@@ -1,3 +1,4 @@
+/* eslint-disable max-lines -- Verification scenarios share command and recovery fixtures. */
 import { jest } from '@jest/globals';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -154,6 +155,38 @@ describe('VerificationCoordinator validation', () => {
 });
 
 describe('VerificationCoordinator persisted reports', () => {
+  it('ignores a superseded verification report during a retry attempt', async () => {
+    const fixture = await verificationRun([command('lint')]);
+    const runner = new FakeCommandRunner({ lint: 'passed' });
+    const coordinator = new VerificationCoordinator({
+      store: fixture.store,
+      commandRunner: runner,
+    });
+
+    try {
+      await coordinator.verify({ runId: fixture.run.id });
+      const completed = await fixture.store.read(fixture.run.id);
+      const retry = await fixture.store.save({
+        ...completed,
+        stage: 'verify',
+        attempt: 2,
+        updatedAt: new Date(Date.parse(completed.updatedAt) + 1_000).toISOString(),
+      });
+      await fixture.store.archiveArtifacts(
+        retry.id,
+        ['verification.json', 'verification.md'],
+        new Date(Date.parse(retry.updatedAt) + 1_000).toISOString(),
+      );
+
+      await expect(coordinator.verify({ runId: fixture.run.id })).resolves.toMatchObject({
+        status: 'passed',
+      });
+      expect(runner.calls).toHaveLength(2);
+    } finally {
+      await fixture.cleanup();
+    }
+  });
+
   it('recovers a persisted report after a transition failure', async () => {
     const fixture = await verificationRun([command('lint')]);
     const originalTransition = fixture.store.transition.bind(fixture.store);

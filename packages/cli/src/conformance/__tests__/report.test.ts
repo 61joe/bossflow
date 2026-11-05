@@ -345,5 +345,6 @@ function unhashedArtifact(root: string, runId: string) {
     fileName: 'unhashed.txt',
     path: path.join(root, '.bossflow', 'runs', runId, 'unhashed.txt'),
     createdAt: NOW,
+    attempt: 1,
   };
 }

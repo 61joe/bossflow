@@ -8,6 +8,8 @@ const baseRun: WorkflowRun = {
   goal: 'Add export support',
   modelProfile: 'openai',
   stage: 'spec',
+  attempt: 1,
+  artifacts: [],
   createdAt: '2026-10-30T00:00:00.000Z',
   updatedAt: '2026-10-30T00:00:00.000Z',
 };
@@ -17,6 +19,7 @@ const planArtifact = {
   fileName: 'plan.json',
   path: '/tmp/project/.bossflow/runs/run-1/plan.json',
   createdAt: '2026-11-02T00:00:00.000Z',
+  attempt: 1,
   sha256: 'a'.repeat(64),
 };
 

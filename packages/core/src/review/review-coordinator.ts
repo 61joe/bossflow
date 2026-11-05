@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 
 import { ReviewResultSchema, RunSummarySchema, TechnicalPlanSchema } from '../contracts/index.js';
 import type {
+  ArtifactKind,
   ReviewResult,
   RunSummary,
   TechnicalPlan,
@@ -15,6 +16,7 @@ import { redactUnknown } from '../redaction/index.js';
 import { VERIFICATION_JSON_FILE } from '../verification/index.js';
 import { VerificationReportSchema } from '../verification/index.js';
 import type { WorkflowRun } from '../workflow/index.js';
+import { findActiveArtifact, findActiveArtifactByFileName } from '../run-store/index.js';
 import {
   MAX_REVIEW_DIFF_BYTES,
   REVIEW_JSON_FILE,
@@ -109,9 +111,7 @@ export class ReviewCoordinator {
   }
 
   async #recover(run: WorkflowRun): Promise<ReviewOutcome | undefined> {
-    const artifact = run.artifacts?.find(
-      (candidate) => candidate.kind === 'review' && candidate.fileName === REVIEW_JSON_FILE,
-    );
+    const artifact = findActiveArtifact(run, 'review', REVIEW_JSON_FILE);
     if (artifact?.sha256 === undefined) {
       return undefined;
     }
@@ -219,7 +219,7 @@ export class ReviewCoordinator {
   }
 
   async #loadArtifactText(run: WorkflowRun, fileName: string, required: boolean): Promise<string> {
-    const artifact = run.artifacts?.find((candidate) => candidate.fileName === fileName);
+    const artifact = findActiveArtifactByFileName(run, fileName);
     if (artifact?.sha256 === undefined) {
       if (required) {
         throw new Error(`Run "${run.id}" has no artifact "${fileName}".`);
@@ -321,10 +321,8 @@ function createSummary(
   });
 }
 
-function findArtifact(run: WorkflowRun, fileName: string, kind: string) {
-  return run.artifacts?.find(
-    (artifact) => artifact.fileName === fileName && artifact.kind === kind,
-  );
+function findArtifact(run: WorkflowRun, fileName: string, kind: ArtifactKind) {
+  return findActiveArtifact(run, kind, fileName);
 }
 
 function createReviewDiffSummary(diff: string): string {

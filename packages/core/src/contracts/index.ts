@@ -24,6 +24,8 @@ export type {
   ArtifactKind,
   ArtifactReference,
   ImplementationResult,
+  ImplementationFailureEvidence,
+  ImplementationFailureKind,
   ImplementationResultStatus,
   InterfaceChange,
   PlanRisk,

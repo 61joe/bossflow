@@ -1,3 +1,4 @@
+/* eslint-disable max-lines -- Public schema contracts remain together for a single source of truth. */
 import { z } from 'zod';
 
 import {
@@ -6,6 +7,7 @@ import {
   APPROVAL_GATES,
   ARTIFACT_KINDS,
   COVERAGE_STATUSES,
+  IMPLEMENTATION_FAILURE_KINDS,
   IMPLEMENTATION_RESULT_STATUSES,
   REVIEW_SEVERITIES,
   REVIEW_STATUSES,
@@ -33,34 +35,121 @@ export const ApprovalRecordSchema = z
       .regex(/^[a-f0-9]{64}$/)
       .optional(),
     actions: z.array(z.enum(APPROVAL_ACTIONS)).min(1).optional(),
+    verificationCommandIds: z.array(NonEmptyStringSchema).min(1).optional(),
+    verificationCommands: z
+      .array(z.lazy(() => VerificationCommandSchema))
+      .min(1)
+      .optional(),
     notes: NonEmptyStringSchema.optional(),
   })
   .strict()
-  .superRefine((approval, context) => {
-    if (approval.gate === 'external-action') {
-      if (approval.actions === undefined) {
-        context.addIssue({
-          code: 'custom',
-          path: ['actions'],
-          message: 'External-action approvals must include at least one action.',
-        });
-      }
-      return;
-    }
-    if (approval.actions !== undefined) {
-      context.addIssue({
-        code: 'custom',
-        path: ['actions'],
-        message: 'Only external-action approvals may include actions.',
-      });
-    }
-    if (approval.artifactFileName === undefined || approval.artifactSha256 === undefined) {
-      context.addIssue({
-        code: 'custom',
-        message: 'Plan and review approvals must include the approved artifact file name and hash.',
-      });
-    }
-  });
+  .superRefine(validateApprovalRecord);
+
+function validateApprovalRecord(
+  approval: z.infer<typeof ApprovalRecordSchema>,
+  context: z.RefinementCtx,
+): void {
+  if (approval.gate === 'external-action') {
+    validateExternalActionApproval(approval, context);
+    return;
+  }
+  validateGateApproval(approval, context);
+  validateVerificationAdoption(approval, context);
+}
+
+function validateExternalActionApproval(
+  approval: z.infer<typeof ApprovalRecordSchema>,
+  context: z.RefinementCtx,
+): void {
+  if (approval.actions === undefined) {
+    context.addIssue({
+      code: 'custom',
+      path: ['actions'],
+      message: 'External-action approvals must include at least one action.',
+    });
+  }
+}
+
+function validateGateApproval(
+  approval: z.infer<typeof ApprovalRecordSchema>,
+  context: z.RefinementCtx,
+): void {
+  if (approval.actions !== undefined) {
+    context.addIssue({
+      code: 'custom',
+      path: ['actions'],
+      message: 'Only external-action approvals may include actions.',
+    });
+  }
+  if (approval.artifactFileName === undefined || approval.artifactSha256 === undefined) {
+    context.addIssue({
+      code: 'custom',
+      message: 'Plan and review approvals must include the approved artifact file name and hash.',
+    });
+  }
+}
+
+function validateVerificationAdoption(
+  approval: z.infer<typeof ApprovalRecordSchema>,
+  context: z.RefinementCtx,
+): void {
+  if (
+    (approval.verificationCommandIds === undefined) !==
+    (approval.verificationCommands === undefined)
+  ) {
+    context.addIssue({
+      code: 'custom',
+      path: ['verificationCommands'],
+      message: 'Verification command IDs and command snapshots must be provided together.',
+    });
+    return;
+  }
+  if (
+    approval.verificationCommandIds === undefined ||
+    approval.verificationCommands === undefined
+  ) {
+    return;
+  }
+  if (approval.gate !== 'plan') {
+    context.addIssue({
+      code: 'custom',
+      path: ['verificationCommands'],
+      message: 'Only plan approvals may adopt Plan verification commands.',
+    });
+  }
+  validateVerificationCommandSnapshots(
+    approval.verificationCommandIds,
+    approval.verificationCommands,
+    context,
+  );
+}
+
+function validateVerificationCommandSnapshots(
+  commandIds: readonly string[],
+  verificationCommands: readonly z.infer<typeof VerificationCommandSchema>[],
+  context: z.RefinementCtx,
+): void {
+  if (new Set(commandIds).size !== commandIds.length) {
+    context.addIssue({
+      code: 'custom',
+      path: ['verificationCommandIds'],
+      message: 'Adopted verification command IDs must be unique.',
+    });
+  }
+  const snapshotIds = verificationCommands.map((command) => command.id);
+  if (
+    snapshotIds.length !== commandIds.length ||
+    new Set(snapshotIds).size !== snapshotIds.length ||
+    snapshotIds.some((commandId) => !commandIds.includes(commandId)) ||
+    commandIds.some((commandId) => !snapshotIds.includes(commandId))
+  ) {
+    context.addIssue({
+      code: 'custom',
+      path: ['verificationCommands'],
+      message: 'Verification command snapshots must match the adopted command IDs.',
+    });
+  }
+}
 
 export const WorktreeMetadataSchema = z
   .object({
@@ -69,6 +158,10 @@ export const WorktreeMetadataSchema = z
     baseCommit: NonEmptyStringSchema,
     createdAt: TimestampSchema,
     status: z.enum(WORKTREE_STATUSES),
+    repositoryFingerprint: z
+      .string()
+      .regex(/^[a-f0-9]{64}$/)
+      .optional(),
     cleanedAt: TimestampSchema.optional(),
   })
   .strict();
@@ -79,6 +172,8 @@ export const ArtifactReferenceSchema = z
     fileName: NonEmptyStringSchema,
     path: NonEmptyStringSchema,
     createdAt: TimestampSchema,
+    attempt: z.number().int().positive().default(1),
+    supersededAt: TimestampSchema.optional(),
     sizeBytes: z.number().int().nonnegative().optional(),
     sha256: z
       .string()
@@ -190,8 +285,66 @@ export const ImplementationResultSchema = z
     changedPaths: z.array(NonEmptyStringSchema),
     testChanges: z.array(NonEmptyStringSchema),
     notes: z.array(NonEmptyStringSchema),
+    failure: z
+      .discriminatedUnion('kind', [
+        z
+          .object({
+            kind: z.literal(IMPLEMENTATION_FAILURE_KINDS[0]),
+            exitCode: z.number().int(),
+            durationMs: z.number().nonnegative(),
+            diagnostic: NonEmptyStringSchema,
+          })
+          .strict(),
+        z
+          .object({
+            kind: z.literal(IMPLEMENTATION_FAILURE_KINDS[1]),
+            timedOut: z.literal(true),
+            durationMs: z.number().nonnegative(),
+            diagnostic: NonEmptyStringSchema,
+            signal: NonEmptyStringSchema.optional(),
+          })
+          .strict(),
+        z
+          .object({
+            kind: z.literal(IMPLEMENTATION_FAILURE_KINDS[2]),
+            durationMs: z.number().nonnegative(),
+            diagnostic: NonEmptyStringSchema,
+          })
+          .strict(),
+        z
+          .object({
+            kind: z.literal(IMPLEMENTATION_FAILURE_KINDS[3]),
+            signal: NonEmptyStringSchema,
+            durationMs: z.number().nonnegative(),
+            diagnostic: NonEmptyStringSchema,
+          })
+          .strict(),
+        z
+          .object({
+            kind: z.literal(IMPLEMENTATION_FAILURE_KINDS[4]),
+            diagnostic: NonEmptyStringSchema,
+          })
+          .strict(),
+        z
+          .object({
+            kind: z.literal(IMPLEMENTATION_FAILURE_KINDS[5]),
+            durationMs: z.number().nonnegative().optional(),
+            diagnostic: NonEmptyStringSchema,
+          })
+          .strict(),
+      ])
+      .optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((result, context) => {
+    if (result.status === 'completed' && result.failure !== undefined) {
+      context.addIssue({
+        code: 'custom',
+        path: ['failure'],
+        message: 'Completed implementation results cannot include failure evidence.',
+      });
+    }
+  });
 
 export const ReviewResultSchema = z
   .object({

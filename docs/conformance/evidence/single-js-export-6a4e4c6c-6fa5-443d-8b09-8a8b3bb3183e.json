@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "adapterId": "codex",
+  "scenarioId": "single-js-export",
+  "projectProfile": {
+    "id": "single-package-javascript",
+    "packageManager": "pnpm",
+    "languages": ["JavaScript"]
+  },
+  "runId": "6a4e4c6c-6fa5-443d-8b09-8a8b3bb3183e",
+  "stage": "blocked",
+  "outcome": "blocked",
+  "firstIncompleteStage": "blocked",
+  "changedPaths": ["src/index.js"],
+  "verification": [
+    {
+      "commandId": "lint",
+      "status": "passed",
+      "exitCode": 0
+    },
+    {
+      "commandId": "typecheck",
+      "status": "passed",
+      "exitCode": 0
+    },
+    {
+      "commandId": "test",
+      "status": "passed",
+      "exitCode": 0
+    },
+    {
+      "commandId": "build",
+      "status": "passed",
+      "exitCode": 0
+    }
+  ],
+  "reviewFindings": [
+    {
+      "id": "missing-coverage-1",
+      "severity": "P1",
+      "title": "Acceptance criterion is not mapped",
+      "status": "open"
+    }
+  ],
+  "userInterventions": ["plan:approved by conformance"],
+  "authorizedExternalActions": [],
+  "artifactHashes": {
+    "run.json": "1d29de9073315e792938bd5df3012a56d148b382020217a012da45abce0cd459",
+    "request.md": "61e32fac36dee87dfde88037d7be93dca0776102c3570d8765298635b4e69082",
+    "spec.json": "d68e8d7c4ed68fbf21713877a9126358fb305f2a2e302b301b3f5136a8035848",
+    "spec.md": "fb894ecd34d38dcd182c0dd007550113f2978446d6ec71a0c18302dcb7fd49f0",
+    "plan.json": "a2d2667f23d93b3ab9ebd140328e22dd1194ac9c6fedb24c08d40c399da41e83",
+    "plan.md": "af02618d65701e380f0199a9a8b7818e4ea94713244db5ba05abd4c0787d7ce9",
+    "implementation.patch": "d7ec9e7227b975a1a82200f68efa654693ec61deb04a810a7c65f4c141c71519",
+    "implementation.json": "609da153d006b412f93d7b72e0cd08486bc1be6cc7b9119604f95d6b02b7bf49",
+    "implementation.md": "47e717ee72974c48bf41a563270a51bc401352f987f531e151607d1263124056",
+    "verification.md": "5746d6f897f3caee1cb8ebdd78fb3c5ab0922184737ab941a8f761b84ea3385d",
+    "verification.json": "9c0f9314a0ed8c85258d022f7be56b478acfef07a4b4eecf53372ad3fba5444b",
+    "review.md": "edddb3e8b581cbe7611ffd1e194a156e27af191f84059b6acd393c24b91beb36",
+    "review.json": "f081830d9b3962f73f313a14decaec142f746ebbd3b77e41aac863c2d7f4a467",
+    "summary.md": "4766f5df1ad6a313a4d8652baf88c2a62e484203f68a6ed3abf607d6c1a1b897",
+    "summary.json": "aee97fa35216ecbc182d13e0ca717705d61aa8166469099140678f1f3002319b"
+  },
+  "startedAt": "2026-11-05T10:22:42.745Z",
+  "endedAt": "2026-11-05T10:24:22.476Z",
+  "failureMessage": "resume failed with exit code 5: Review blocked with 1 unresolved findings.\nRun \"bossflow status 6a4e4c6c-6fa5-443d-8b09-8a8b3bb3183e\" to inspect review findings.\n\nCommand failed: /Users/liuyizhou/.nvm/versions/node/v24.22.1/bin/node /Users/liuyizhou/Documents/project/personal/bossflow/packages/cli/dist/bin.js resume 6a4e4c6c-6fa5-443d-8b09-8a8b3bb3183e\nReview blocked with 1 unresolved findings.\nRun \"bossflow status 6a4e4c6c-6fa5-443d-8b09-8a8b3bb3183e\" to inspect review findings."
+}

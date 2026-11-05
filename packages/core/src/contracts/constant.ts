@@ -19,5 +19,13 @@ export const REVIEW_SEVERITIES = ['P0', 'P1', 'P2', 'P3'] as const;
 export const REVIEW_STATUSES = ['open', 'resolved', 'waived'] as const;
 export const COVERAGE_STATUSES = ['covered', 'partial', 'missing'] as const;
 export const IMPLEMENTATION_RESULT_STATUSES = ['completed', 'blocked'] as const;
+export const IMPLEMENTATION_FAILURE_KINDS = [
+  'nonzero-exit',
+  'timeout',
+  'canceled',
+  'signaled',
+  'spawn-error',
+  'unknown',
+] as const;
 export const SUMMARY_STATUSES = ['completed', 'blocked', 'failed'] as const;
 export const RUN_ID_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,127}$/;

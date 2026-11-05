@@ -66,8 +66,8 @@ export const SAFE_DIFF: WorktreeDiff = {
 export class FakeWorkspace implements ImplementationWorktreeWorkspace {
   diff: WorktreeDiff;
   statuses = [
-    { isDirty: false, fingerprint: 'same' },
-    { isDirty: false, fingerprint: 'same' },
+    { isDirty: false, fingerprint: 'a'.repeat(64) },
+    { isDirty: false, fingerprint: 'a'.repeat(64) },
   ];
   createCalls = 0;
   addedWorktrees = 0;
@@ -85,7 +85,7 @@ export class FakeWorkspace implements ImplementationWorktreeWorkspace {
   }
 
   async readStatus() {
-    return this.statuses.shift() ?? { isDirty: false, fingerprint: 'same' };
+    return this.statuses.shift() ?? { isDirty: false, fingerprint: 'a'.repeat(64) };
   }
 
   async collectDiff(): Promise<WorktreeDiff> {

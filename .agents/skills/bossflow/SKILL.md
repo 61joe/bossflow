@@ -74,6 +74,14 @@ bossflow status <run-id>
 bossflow approve <run-id> --gate plan
 ```
 
+如果用户明确选择执行 Plan 中额外的浏览器或集成检查，可重复传入：
+
+```text
+bossflow approve <run-id> --gate plan --verification <command-id>
+```
+
+只有显式采纳的 Plan 命令会进入 authoritative verification set；未采纳命令仍为 advisory。
+
 然后运行：
 
 ```text
@@ -100,6 +108,22 @@ spec → plan → plan_approval → build → verify → review → review_appro
 - Review 读取 Specification、批准的 Plan、Diff 和验证证据。
 
 不得为了推进流程而在主工作区手工补写代码、伪造测试结果或跳过失败命令。
+
+## 重试 blocked 或 failed Run
+
+`resume` 不会重新打开 terminal Run。先读取 `bossflow status <run-id>` 和证据，再根据是否需要
+修改代码显式重试：
+
+```text
+bossflow retry <run-id> --from build
+bossflow retry <run-id> --from verify
+```
+
+- Build retry 要求当前 Plan approval、Run 自有 Worktree 和未变化的主仓库基线。
+- Verify retry 要求 Worktree Diff 与最近接受的 implementation evidence 一致；代码变化时改用
+  Build retry。
+- 可在 retry 中重复 `--verification <id>` 采纳当前 Plan 的额外检查。
+- 重试会创建新 attempt 并归档旧证据，但不会授权任何外部 Git 动作。
 
 ## Review 审批与外部动作
 
